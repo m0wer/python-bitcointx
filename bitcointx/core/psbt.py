@@ -1280,9 +1280,9 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                     raise SerializationError(
                         descr(f"Invalid pubkey encountered in {key_type.name}")
                     )
-                assert (
-                    pub not in partial_sigs
-                ), "duplicate keys should have been catched inside read_psbt_keymap()"
+                assert pub not in partial_sigs, (
+                    "duplicate keys should have been catched inside read_psbt_keymap()"
+                )
                 partial_sigs[pub] = value
             elif key_type is PSBT_InKeyType.SIGHASH_TYPE:
                 ensure_empty_key_data(key_type, key_data, descr(""))
@@ -1301,9 +1301,9 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                     raise SerializationError(
                         descr(f"Invalid pubkey encountered in {key_type.name}")
                     )
-                assert (
-                    pub not in derivation_map
-                ), "duplicate keys should have been catched inside read_psbt_keymap()"
+                assert pub not in derivation_map, (
+                    "duplicate keys should have been catched inside read_psbt_keymap()"
+                )
                 derivation_map[pub] = PSBT_KeyDerivationInfo.deserialize(value)
             elif key_type is PSBT_InKeyType.FINAL_SCRIPTSIG:
                 ensure_empty_key_data(key_type, key_data, descr(""))
@@ -1677,9 +1677,9 @@ class PSBT_Output(PSBT_CoinClass, next_dispatch_final=True):
                     raise SerializationError(
                         descr(f"Invalid pubkey encountered in {key_type.name}")
                     )
-                assert (
-                    pub not in derivation_map
-                ), "duplicate keys should have been catched inside read_psbt_keymap()"
+                assert pub not in derivation_map, (
+                    "duplicate keys should have been catched inside read_psbt_keymap()"
+                )
                 derivation_map[pub] = PSBT_KeyDerivationInfo.deserialize(value)
             else:
                 assert_never(key_type)
@@ -2145,9 +2145,9 @@ class PartiallySignedTransaction(PSBT_CoinClass, next_dispatch_final=True):
                     )
 
                 xpub = CCoinExtPubKey.from_bytes(key_data[4:])
-                assert (
-                    xpub not in xpubs
-                ), "duplicate keys should have been catched inside read_psbt_keymap()"
+                assert xpub not in xpubs, (
+                    "duplicate keys should have been catched inside read_psbt_keymap()"
+                )
                 xpubs[xpub] = PSBT_KeyDerivationInfo.deserialize(value)
 
             elif key_type is PSBT_GlobalKeyType.VERSION:

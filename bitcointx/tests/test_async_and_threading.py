@@ -152,9 +152,9 @@ class Test_Threading(unittest.TestCase):
             self.assertEqual(get_current_chain_params().NAME, "bitcoin/regtest")
             finish("regtest")
 
-        assert isinstance(
-            get_current_chain_params(), BitcoinMainnetParams
-        ), "tests assume bitcoin params in effect by default"
+        assert isinstance(get_current_chain_params(), BitcoinMainnetParams), (
+            "tests assume bitcoin params in effect by default"
+        )
 
         mainnet_thread = threading.Thread(target=mainnet)
         testnet_thread = threading.Thread(target=testnet)

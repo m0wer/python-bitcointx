@@ -117,9 +117,9 @@ def load_test_vectors(name: str, skip_fixme: bool = True) -> TestDataIterator:
 
             if len(test_case) == 2:
                 if not skip_fixme:
-                    assert test_case[0].startswith(
-                        "FIXME"
-                    ), "we do not expect anything other than FIXME* here"
+                    assert test_case[0].startswith("FIXME"), (
+                        "we do not expect anything other than FIXME* here"
+                    )
                     continue
                 if test_case[0] == "FIXME":
                     fixme_comment = test_case[1]

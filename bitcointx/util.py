@@ -102,9 +102,9 @@ def get_class_dispatcher_depends(
         dset.add(dep_dclass)
         dset |= get_class_dispatcher_depends(dep_dclass)
 
-    assert len(dset) == len(
-        set([elt._class_dispatcher__identity for elt in dset])
-    ), "all the dispatcher in the set must have distinct identities"
+    assert len(dset) == len(set([elt._class_dispatcher__identity for elt in dset])), (
+        "all the dispatcher in the set must have distinct identities"
+    )
 
     return dset
 
@@ -561,9 +561,9 @@ if has_contextvars:
         _context_vars_storage__: Dict[str, "ContextVar[Any]"]
 
         def __init__(self, **kwargs: Any):
-            assert (
-                self.__class__ is not ContextVarsCompat
-            ), "ContextVarsCompat should always be subclassed"
+            assert self.__class__ is not ContextVarsCompat, (
+                "ContextVarsCompat should always be subclassed"
+            )
             vardict = {
                 name: ContextVar(name, default=default_value)
                 for name, default_value in kwargs.items()
@@ -588,9 +588,9 @@ else:
         _context_vars_defaults__: Dict[str, Any] = {}
 
         def __init__(self, **kwargs: Any):
-            assert (
-                self.__class__ is not ContextVarsCompat
-            ), "ContextVarsCompat should always be subclassed"
+            assert self.__class__ is not ContextVarsCompat, (
+                "ContextVarsCompat should always be subclassed"
+            )
             defaults = self.__class__._context_vars_defaults__
 
             if not kwargs:

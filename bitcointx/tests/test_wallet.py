@@ -102,9 +102,9 @@ def _test_address_implementations(
                     elif getattr(aclass, "from_redeemScript", None):
                         a = aclass.from_redeemScript(CScript(b"\xa9" + Hash160(pub) + b"\x87"))
                     else:
-                        assert (
-                            len(dispatcher_mapped_list(aclass)) > 0
-                        ), f"dispatcher mapped list for {aclass} must not be empty"
+                        assert len(dispatcher_mapped_list(aclass)) > 0, (
+                            f"dispatcher mapped list for {aclass} must not be empty"
+                        )
 
                     if a is not None:
                         spk = a.to_scriptPubKey()
