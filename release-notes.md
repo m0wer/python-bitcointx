@@ -1,5 +1,35 @@
 # python-bitcointx release notes
 
+## Unreleased (fork)
+
+This is the first release from a maintenance fork of the original
+Simplexum/python-bitcointx repository, which has been unmaintained since
+January 2024.
+
+Changes in this release:
+
+- Minimum supported Python version raised to 3.11.
+- libsecp256k1 v0.7.x is now supported. The library handles both the legacy
+  `secp256k1_ec_privkey_*` symbol names and the new `secp256k1_ec_seckey_*`
+  names introduced in v0.7.0, exposing both spellings on the loaded handle
+  for backward compatibility (issue
+  [#88](https://github.com/Simplexum/python-bitcointx/issues/88)).
+- RIPEMD160 implementation now uses `hashlib.new('ripemd160', ...)` as a fast
+  path when the underlying OpenSSL build exposes it. This dramatically
+  speeds up `Hash160` and script evaluation on systems with the legacy
+  provider enabled. The pure-Python implementation is retained as a fallback
+  and remains the source of truth for correctness testing.
+- Build / packaging modernized: declarative metadata in `pyproject.toml`
+  (PEP 621), `setup.py` reduced to a thin shim, legacy `run_flake8.sh` /
+  `run_mypy.sh` / `.travis.yml` removed in favor of `pre-commit` and GitHub
+  Actions.
+- CI matrix updated to Python 3.11 / 3.12 / 3.13 and libsecp256k1 v0.4.0 and
+  v0.7.0; a CMake-based fallback is used to build libsecp256k1 v0.6+ which
+  removed Autotools.
+- `asyncio.get_event_loop().run_until_complete(...)` usage in the test suite
+  replaced with `asyncio.run(...)` to work with Python 3.14 (which removed
+  implicit event-loop creation on `get_event_loop()`).
+
 ## v1.1.5
 
 Breaking change (in case any code has depended on incorrect behavior):

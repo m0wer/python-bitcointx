@@ -5,6 +5,13 @@
 
 # python-bitcointx
 
+> **Fork notice:** this repository is a maintenance fork of
+> [Simplexum/python-bitcointx](https://github.com/Simplexum/python-bitcointx),
+> which has been unmaintained since January 2024. The fork focuses on
+> modernizing tooling, supporting current Python and libsecp256k1 releases, and
+> addressing open issues in the upstream tracker. Public API behavior is kept
+> backward compatible.
+
 This Python3 library provides an easy interface to the bitcoin transaction data
 structures. This is based on https://github.com/petertodd/python-bitcoinlib,
 but is focused only on providing the tools to build, manipulate and sign
@@ -42,8 +49,8 @@ the library and v1.0.0 release in particular, and also has some code examples.
 
 ## Requirements
 
-- Python >= 3.7
-- [libsecp256k1](https://github.com/bitcoin-core/secp256k1)
+- Python >= 3.11
+- [libsecp256k1](https://github.com/bitcoin-core/secp256k1) (v0.4.0 - v0.7.x supported)
 - [libbitcoinconsensus](https://github.com/bitcoin/bitcoin/blob/master/doc/shared-libraries.md) (optional, for consensus-compatible script verification)
 
 Tests use the following libsecp256k1 version:
