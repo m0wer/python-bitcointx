@@ -1,0 +1,6 @@
+# Revisions in this file are skipped by `git blame --ignore-revs-file`.
+# Configure git locally with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: apply ruff format to the entire repository
+b887823cf071888a64e72736edad6b76c7309a76
