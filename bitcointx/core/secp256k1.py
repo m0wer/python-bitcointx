@@ -199,8 +199,19 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
     lib.secp256k1_ec_pubkey_tweak_add.restype = ctypes.c_int
     lib.secp256k1_ec_pubkey_tweak_add.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
 
-    lib.secp256k1_ec_privkey_tweak_add.restype = ctypes.c_int
-    lib.secp256k1_ec_privkey_tweak_add.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+    # libsecp256k1 v0.7.0 renamed `secp256k1_ec_privkey_*` to
+    # `secp256k1_ec_seckey_*`. Expose the function under both names on the
+    # library handle so callers can use either spelling regardless of which
+    # symbol the underlying library exports.
+    # See: https://github.com/Simplexum/python-bitcointx/issues/88
+    if getattr(lib, 'secp256k1_ec_seckey_tweak_add', None):
+        _tweak_add = lib.secp256k1_ec_seckey_tweak_add
+    else:
+        _tweak_add = lib.secp256k1_ec_privkey_tweak_add
+    _tweak_add.restype = ctypes.c_int
+    _tweak_add.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+    lib.secp256k1_ec_privkey_tweak_add = _tweak_add  # type: ignore[attr-defined]
+    lib.secp256k1_ec_seckey_tweak_add = _tweak_add  # type: ignore[attr-defined]
 
     lib.secp256k1_ec_pubkey_serialize.restype = ctypes.c_int
     lib.secp256k1_ec_pubkey_serialize.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_size_t), ctypes.c_char_p, ctypes.c_uint]
@@ -210,10 +221,18 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
         lib.secp256k1_ec_pubkey_negate.restype = ctypes.c_int
         lib.secp256k1_ec_pubkey_negate.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
 
-    if getattr(lib, 'secp256k1_ec_privkey_negate', None):
+    # libsecp256k1 v0.7.0 renamed `secp256k1_ec_privkey_negate` to
+    # `secp256k1_ec_seckey_negate`. Expose under both names for compatibility.
+    _negate = (
+        getattr(lib, 'secp256k1_ec_seckey_negate', None)
+        or getattr(lib, 'secp256k1_ec_privkey_negate', None)
+    )
+    if _negate is not None:
         has_privkey_negate = True
-        lib.secp256k1_ec_privkey_negate.restype = ctypes.c_int
-        lib.secp256k1_ec_privkey_negate.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+        _negate.restype = ctypes.c_int
+        _negate.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+        lib.secp256k1_ec_privkey_negate = _negate  # type: ignore[attr-defined]
+        lib.secp256k1_ec_seckey_negate = _negate  # type: ignore[attr-defined]
 
     lib.secp256k1_ec_pubkey_combine.restype = ctypes.c_int
     lib.secp256k1_ec_pubkey_combine.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int]
