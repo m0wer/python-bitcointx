@@ -1,0 +1,87 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-bitcointx"
+description = "A library for handling Bitcoin transactions and associated data"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "LGPL-3.0-or-later"}
+keywords = ["bitcoin"]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dynamic = ["version"]
+# Runtime dependencies: none. Native dependencies (loaded at runtime via ctypes):
+#   - libsecp256k1 >= 0.3.0 and < 1.0.0 (tested with 0.4.0; 0.7.0+ supported via
+#     compatibility shim that detects both the old `secp256k1_ec_privkey_*`
+#     and the new `secp256k1_ec_seckey_*` symbol names).
+#   - libbitcoinconsensus (optional).
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Simplexum/python-bitcointx"
+Issues = "https://github.com/Simplexum/python-bitcointx/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "coverage>=7.0.0",
+    "ruff>=0.6.0",
+    "mypy>=1.10.0",
+    "typing-extensions>=4.7.0",
+    "pre-commit>=3.7.0",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "bitcointx.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["bitcointx*"]
+
+[tool.setuptools.package-data]
+bitcointx = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["doc", "build", "dist"]
+
+[tool.ruff.lint]
+# Conservative starting set, keeping diffs small on legacy code.
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = [
+    "E501",  # line too long (long lines exist in legacy code and crypto tables)
+    "E741",  # ambiguous variable names (used in cryptographic spec translations)
+    "B008",  # do not perform function call in argument defaults
+    "B904",  # raise from ... (legacy code raises plain exceptions)
+    "UP006", # PEP 585 syntax (kept consistent with existing typing imports)
+    "UP007", # PEP 604 syntax (same reason)
+    "UP035", # deprecated import (typing aliases used intentionally)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"bitcointx/core/_ripemd160.py" = ["E226", "E741"]
+"bitcointx/core/sha256.py" = ["E226", "E741"]
+"bitcointx/tests/*" = ["B011"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["bitcointx", "examples"]
+warn_unused_ignores = true
+warn_redundant_casts = true
+show_error_codes = true
+
+[tool.pytest.ini_options]
+testpaths = ["bitcointx/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
