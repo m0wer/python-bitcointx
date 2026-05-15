@@ -11,30 +11,27 @@
 
 # pylama:ignore=E501,C901
 
-import unittest
-import warnings
-import threading
 import asyncio
 import ctypes
-
+import threading
+import unittest
+import warnings
 from typing import Dict, Union
 
-from bitcointx import (
-    select_chain_params, get_current_chain_params, BitcoinMainnetParams
-)
-from bitcointx.util import ContextVarsCompat
-from bitcointx.core import x, Hash160, CTransaction
+import bitcointx.bech32
+from bitcointx import BitcoinMainnetParams, get_current_chain_params, select_chain_params
+from bitcointx.base58 import CBase58Data
+from bitcointx.core import CTransaction, Hash160, x
 from bitcointx.core.key import CPubKey
 from bitcointx.core.script import CScript
-from bitcointx.core.secp256k1 import (
-    secp256k1_get_last_error, get_secp256k1
-)
+from bitcointx.core.secp256k1 import get_secp256k1, secp256k1_get_last_error
+from bitcointx.util import ContextVarsCompat
 from bitcointx.wallet import (
-    P2PKHCoinAddress, P2SHCoinAddress, P2WPKHCoinAddress,
-    P2WPKHBitcoinRegtestAddress
+    P2PKHCoinAddress,
+    P2SHCoinAddress,
+    P2WPKHBitcoinRegtestAddress,
+    P2WPKHCoinAddress,
 )
-import bitcointx.bech32
-from bitcointx.base58 import CBase58Data
 
 
 class Test_Threading(unittest.TestCase):
@@ -200,7 +197,7 @@ class Test_Threading(unittest.TestCase):
             f3 = asyncio.ensure_future(async_regtest())
             await asyncio.gather(f1, f2, f3)
 
-        asyncio.get_event_loop().run_until_complete(go())
+        asyncio.run(go())
 
         self.assertEqual(set(finished_successfully),
                          set(['mainnet', 'testnet', 'regtest']))
