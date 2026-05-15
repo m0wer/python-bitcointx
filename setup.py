@@ -1,37 +1,10 @@
-#!/usr/bin/env python
+"""Legacy setup shim.
 
-import os
+All project metadata lives in ``pyproject.toml``. This file remains only so
+that ``python setup.py <command>`` invocations continue to work for tools that
+have not yet switched to the PEP 517 build interface.
+"""
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
-from bitcointx import __version__
-
-here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.md')) as f:
-    README = f.read()
-
-requires = []
-
-setup(
-    name='python-bitcointx',
-    version=__version__,
-    description='A library for handling Bitcoin transactions and associated data',
-    long_description=README,
-    long_description_content_type='text/markdown',
-    classifiers=[
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
-    ],
-    python_requires='>=3.7',
-    url='https://github.com/Simplexum/python-bitcointx',
-    keywords='bitcoin',
-    packages=find_packages(),
-    zip_safe=False,
-    install_requires=requires,
-    test_suite="bitcointx.tests",
-    package_data={"bitcointx": ["py.typed"]}
-)
+setup()
