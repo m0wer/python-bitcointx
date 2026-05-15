@@ -4,3 +4,6 @@
 
 # style: apply ruff format to the entire repository
 b887823cf071888a64e72736edad6b76c7309a76
+
+# style: apply ruff lint auto-fixes
+06375f84c79c5ddd5b9ca2926971f2598b8e7ae8
