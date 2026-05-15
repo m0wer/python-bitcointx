@@ -38,48 +38,67 @@ from typing import List, Tuple
 
 import bitcointx.rpc
 from bitcointx.core import (
-    x, lx, b2x, Hash160, COutPoint, CTxOut, CTxIn, CTransaction,
-    str_money_value, CoreCoinParams
+    x,
+    lx,
+    b2x,
+    Hash160,
+    COutPoint,
+    CTxOut,
+    CTxIn,
+    CTransaction,
+    str_money_value,
+    CoreCoinParams,
 )
 from bitcointx.core.script import (
-    CScript, MAX_SCRIPT_ELEMENT_SIZE,
-    OP_HASH160, OP_CHECKSIGVERIFY, OP_DROP, OP_DEPTH,
-    OP_EQUAL, OP_EQUALVERIFY, OP_RETURN, SIGHASH_NONE,
-    ScriptElement_Type
+    CScript,
+    MAX_SCRIPT_ELEMENT_SIZE,
+    OP_HASH160,
+    OP_CHECKSIGVERIFY,
+    OP_DROP,
+    OP_DEPTH,
+    OP_EQUAL,
+    OP_EQUALVERIFY,
+    OP_RETURN,
+    SIGHASH_NONE,
+    ScriptElement_Type,
 )
 from bitcointx.wallet import CCoinKey, P2SHCoinAddress
 
 parser = argparse.ArgumentParser(
-    description=("Publish text in the blockchain, suitably padded "
-                 "for easy recovery with strings"),
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    description=("Publish text in the blockchain, suitably padded for easy recovery with strings"),
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+)
 
 parser.add_argument(
-    '-n', action='store_true', dest='dryrun',
-    help="Dry-run; don't actually send the transactions")
+    "-n", action="store_true", dest="dryrun", help="Dry-run; don't actually send the transactions"
+)
+parser.add_argument("-q", "--quiet", action="count", default=0, help="Be more quiet.")
 parser.add_argument(
-    "-q", "--quiet", action="count", default=0, help="Be more quiet.")
+    "-v",
+    "--verbose",
+    action="count",
+    default=0,
+    help="Be more verbose. Both -v and -q may be used multiple times.",
+)
 parser.add_argument(
-    "-v", "--verbose", action="count", default=0,
-    help="Be more verbose. Both -v and -q may be used multiple times.")
+    "--min-len",
+    action="store",
+    type=int,
+    default=20,
+    help="Minimum text length; shorter text is padded to this length",
+)
 parser.add_argument(
-    "--min-len", action="store", type=int, default=20,
-    help="Minimum text length; shorter text is padded to this length")
+    "-f", "--fee-per-kb", action="store", type=float, default=0.0002, help="Fee-per-KB"
+)
 parser.add_argument(
-    "-f", "--fee-per-kb", action="store", type=float, default=0.0002,
-    help="Fee-per-KB")
-parser.add_argument(
-    "-k", "--privkey", action="store", type=str, default=None,
-    help="Specify private key")
+    "-k", "--privkey", action="store", type=str, default=None, help="Specify private key"
+)
 
 net_parser = parser.add_mutually_exclusive_group()
-net_parser.add_argument('-t', '--testnet', action='store_true',
-                        dest='testnet', help='Use testnet')
-net_parser.add_argument('-r', '--regtest', action='store_true',
-                        dest='regtest', help='Use regtest')
+net_parser.add_argument("-t", "--testnet", action="store_true", dest="testnet", help="Use testnet")
+net_parser.add_argument("-r", "--regtest", action="store_true", dest="regtest", help="Use regtest")
 
-parser.add_argument('fd', type=argparse.FileType('rb'), metavar='FILE',
-                    help='Text file')
+parser.add_argument("fd", type=argparse.FileType("rb"), metavar="FILE", help="Text file")
 
 args = parser.parse_args()
 
@@ -95,9 +114,9 @@ elif args.verbosity <= -2:
     logging.root.setLevel(logging.ERROR)
 
 if args.testnet:
-    bitcointx.select_chain_params('bitcoin/testnet')
+    bitcointx.select_chain_params("bitcoin/testnet")
 elif args.regtest:
-    bitcointx.select_chain_params('bitcoin/regtest')
+    bitcointx.select_chain_params("bitcoin/regtest")
 
 rpc = bitcointx.rpc.RPCCaller(allow_default_conf=True)
 
@@ -107,19 +126,20 @@ if args.privkey is None:
 else:
     args.privkey = CCoinKey(args.privkey)
 
-logging.info('Using keypair %s %s' % (b2x(args.privkey.pub), args.privkey))
+logging.info("Using keypair %s %s" % (b2x(args.privkey.pub), args.privkey))
 
 # Turn the text file into padded lines
 if args.fd is sys.stdin:
     # work around a bug where even though we specified binary encoding we get
     # the sys.stdin instead.
     args.fd = sys.stdin.buffer
-raw_padded_lines = [b'\x00' + line.rstrip().ljust(args.min_len)
-                    + b'\x00' for line in args.fd.readlines()]
+raw_padded_lines = [
+    b"\x00" + line.rstrip().ljust(args.min_len) + b"\x00" for line in args.fd.readlines()
+]
 
 # combine lines if < MAX_SCRIPT_ELEMENT_SIZE
 padded_lines = []
-prev_line = b'\x00'
+prev_line = b"\x00"
 for line in raw_padded_lines:
     if len(prev_line) + len(line) <= MAX_SCRIPT_ELEMENT_SIZE:
         prev_line = prev_line + line[1:]
@@ -133,6 +153,7 @@ if prev_line:
 
 scripts: List[Tuple[CScript, CScript]] = []
 while padded_lines:
+
     def make_scripts(lines: List[bytes], n: int) -> Tuple[CScript, CScript]:
         # The n makes sure every p2sh addr is unique; the pubkey lets us
         # control the order the vin order vs. just using hashlocks.
@@ -141,26 +162,33 @@ while padded_lines:
             if len(chunk) > MAX_SCRIPT_ELEMENT_SIZE:
                 parser.exit(
                     status=-1,
-                    message=('Error: lines must be less than %d characters; '
-                             'got %d characters\n' %
-                             (MAX_SCRIPT_ELEMENT_SIZE, len(chunk))))
+                    message=(
+                        "Error: lines must be less than %d characters; "
+                        "got %d characters\n" % (MAX_SCRIPT_ELEMENT_SIZE, len(chunk))
+                    ),
+                )
             redeemScript.extend([OP_HASH160, Hash160(chunk), OP_EQUALVERIFY])
 
-        redeemScript += [args.privkey.pub, OP_CHECKSIGVERIFY,
-                         # deduplicate push dropped to meet BIP62 rules
-                         n, OP_DROP,
-                         # prevent scriptSig malleability
-                         OP_DEPTH, 0, OP_EQUAL]
+        redeemScript += [
+            args.privkey.pub,
+            OP_CHECKSIGVERIFY,
+            # deduplicate push dropped to meet BIP62 rules
+            n,
+            OP_DROP,
+            # prevent scriptSig malleability
+            OP_DEPTH,
+            0,
+            OP_EQUAL,
+        ]
 
         return CScript(lines) + CScript(redeemScript), CScript(redeemScript)
 
     scriptSig = redeemScript = None
     for i in range(len(padded_lines)):
-        next_scriptSig, next_redeemScript = \
-            make_scripts(padded_lines[0:i+1], len(scripts))
+        next_scriptSig, next_redeemScript = make_scripts(padded_lines[0 : i + 1], len(scripts))
 
         # FIXME: magic numbers!
-        if len(next_redeemScript) > 520 or len(next_scriptSig) > 1600-100:
+        if len(next_redeemScript) > 520 or len(next_scriptSig) > 1600 - 100:
             padded_lines = padded_lines[i:]
             break
 
@@ -180,34 +208,35 @@ while padded_lines:
 
 # the 41 accounts for the size of the CTxIn itself
 payments = {
-    str(P2SHCoinAddress.from_redeemScript(redeemScript)): int(round(
-        ((len(scriptSig)+41)/1000 * args.fee_per_kb)*CoreCoinParams.COIN))
+    str(P2SHCoinAddress.from_redeemScript(redeemScript)): int(
+        round(((len(scriptSig) + 41) / 1000 * args.fee_per_kb) * CoreCoinParams.COIN)
+    )
     for scriptSig, redeemScript in scripts
 }
 
 prevouts_by_scriptPubKey = None
 if not args.dryrun:
     txid = rpc.sendmany(
-        '', {adr: float(float(amount)/CoreCoinParams.COIN)
-             for adr, amount in payments.items()}, 0)
+        "", {adr: float(float(amount) / CoreCoinParams.COIN) for adr, amount in payments.items()}, 0
+    )
 
-    logging.info('Sent pre-pub tx: %s' % txid)
+    logging.info("Sent pre-pub tx: %s" % txid)
 
     tx = CTransaction.deserialize(x(rpc.getrawtransaction(txid)))
 
     prevouts_by_scriptPubKey = {
-        txout.scriptPubKey: COutPoint(lx(txid), i)
-        for i, txout in enumerate(tx.vout)
+        txout.scriptPubKey: COutPoint(lx(txid), i) for i, txout in enumerate(tx.vout)
     }
 
 else:
     prevouts_by_scriptPubKey = {
-        redeemScript.to_p2sh_scriptPubKey(): COutPoint(b'\x00'*32, i)
-        for i, (scriptSig, redeemScript) in enumerate(scripts)}
-    logging.debug('Payments: %r' % payments)
-    logging.info('Total cost: %s BTC' %
-                 str_money_value(
-                     sum(amount for addr, amount in payments.items())))
+        redeemScript.to_p2sh_scriptPubKey(): COutPoint(b"\x00" * 32, i)
+        for i, (scriptSig, redeemScript) in enumerate(scripts)
+    }
+    logging.debug("Payments: %r" % payments)
+    logging.info(
+        "Total cost: %s BTC" % str_money_value(sum(amount for addr, amount in payments.items()))
+    )
 
 # Create unsigned tx for SignatureHash
 vout = [CTxOut(0, CScript([OP_RETURN]))]
@@ -236,8 +265,8 @@ signed_tx = CTransaction(signed_vin, vout)
 
 if args.dryrun:
     serialized_tx = signed_tx.serialize()
-    logging.info('tx size: %d bytes' % len(serialized_tx))
-    logging.debug('hex: %s' % b2x(serialized_tx))
+    logging.info("tx size: %d bytes" % len(serialized_tx))
+    logging.debug("hex: %s" % b2x(serialized_tx))
 
 else:
     # FIXME: the tx could be too long here, but there's no way to get sendmany
@@ -245,6 +274,6 @@ else:
     # punting.
 
     tx_hex = b2x(signed_tx.serialize())
-    logging.debug('Sending publish tx, hex: %s' % tx_hex)
+    logging.debug("Sending publish tx, hex: %s" % tx_hex)
     txid = rpc.sendrawtransaction(tx_hex)
-    logging.info('Sent publish tx: %s' % txid)
+    logging.info("Sent publish tx: %s" % txid)

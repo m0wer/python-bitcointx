@@ -25,12 +25,17 @@ from bitcointx.util import ensure_isinstance
 from bitcointx.core import MoneyRange, CTransaction, CTxOut
 from bitcointx.core.script import CScript, CScriptWitness
 from bitcointx.core.scripteval import (
-    SCRIPT_VERIFY_P2SH, SCRIPT_VERIFY_DERSIG,
-    SCRIPT_VERIFY_NULLDUMMY, SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
-    SCRIPT_VERIFY_CHECKSEQUENCEVERIFY, SCRIPT_VERIFY_WITNESS,
+    SCRIPT_VERIFY_P2SH,
+    SCRIPT_VERIFY_DERSIG,
+    SCRIPT_VERIFY_NULLDUMMY,
+    SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
+    SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
+    SCRIPT_VERIFY_WITNESS,
     SCRIPT_VERIFY_TAPROOT,
-    ALL_SCRIPT_VERIFY_FLAGS, ScriptVerifyFlag_Type,
-    VerifyScriptError, script_verify_flags_to_string
+    ALL_SCRIPT_VERIFY_FLAGS,
+    ScriptVerifyFlag_Type,
+    VerifyScriptError,
+    script_verify_flags_to_string,
 )
 
 _libbitcoin_consensus = None
@@ -47,16 +52,16 @@ bitcoinconsensus_ERR_INVALID_FLAGS = 5
 
 BITCOINCONENSUS_LAST_ERROR_VALUE = bitcoinconsensus_ERR_INVALID_FLAGS
 BITCOINCONSENSUS_ERROR_NAMES = {
-    bitcoinconsensus_ERR_OK: 'success',
-    bitcoinconsensus_ERR_TX_INDEX: 'input index too large',
-    bitcoinconsensus_ERR_TX_SIZE_MISMATCH: 'transaction size mismatch',
-    bitcoinconsensus_ERR_TX_DESERIALIZE: 'error deserializing transaction',
-    bitcoinconsensus_ERR_AMOUNT_REQUIRED: 'amount required',
-    bitcoinconsensus_ERR_INVALID_FLAGS: 'invalid flags supplied'
+    bitcoinconsensus_ERR_OK: "success",
+    bitcoinconsensus_ERR_TX_INDEX: "input index too large",
+    bitcoinconsensus_ERR_TX_SIZE_MISMATCH: "transaction size mismatch",
+    bitcoinconsensus_ERR_TX_DESERIALIZE: "error deserializing transaction",
+    bitcoinconsensus_ERR_AMOUNT_REQUIRED: "amount required",
+    bitcoinconsensus_ERR_INVALID_FLAGS: "invalid flags supplied",
 }
 
 # Script verification flags
-bitcoinconsensus_SCRIPT_FLAGS_VERIFY_NONE = 0,
+bitcoinconsensus_SCRIPT_FLAGS_VERIFY_NONE = (0,)
 # evaluate P2SH (BIP16) subscripts
 bitcoinconsensus_SCRIPT_FLAGS_VERIFY_P2SH = 1 << 0
 # enforce strict DER (BIP66) compliance
@@ -78,28 +83,27 @@ BITCOINCONSENSUS_FLAG_MAPPING = {
     SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY: bitcoinconsensus_SCRIPT_FLAGS_VERIFY_CHECKLOCKTIMEVERIFY,
     SCRIPT_VERIFY_CHECKSEQUENCEVERIFY: bitcoinconsensus_SCRIPT_FLAGS_VERIFY_CHECKSEQUENCEVERIFY,
     SCRIPT_VERIFY_WITNESS: bitcoinconsensus_SCRIPT_FLAGS_VERIFY_WITNESS,
-    SCRIPT_VERIFY_TAPROOT: bitcoinconsensus_SCRIPT_FLAGS_VERIFY_TAPROOT
+    SCRIPT_VERIFY_TAPROOT: bitcoinconsensus_SCRIPT_FLAGS_VERIFY_TAPROOT,
 }
 
 BITCOINCONSENSUS_ACCEPTED_FLAGS = set(BITCOINCONSENSUS_FLAG_MAPPING.keys())
 
 
-def _flags_to_libconsensus(flags: Union[Tuple[ScriptVerifyFlag_Type, ...],
-                                        Set[ScriptVerifyFlag_Type]]
-                           ) -> int:
+def _flags_to_libconsensus(
+    flags: Union[Tuple[ScriptVerifyFlag_Type, ...], Set[ScriptVerifyFlag_Type]],
+) -> int:
     if isinstance(flags, tuple):
         flags = set(flags)
     elif not isinstance(flags, set):
-        raise TypeError('flags must be supplied as a tuple or a set')
-    if (flags - ALL_SCRIPT_VERIFY_FLAGS):
-        raise ValueError('unknown flags supplied')
-    if (flags - BITCOINCONSENSUS_ACCEPTED_FLAGS):
+        raise TypeError("flags must be supplied as a tuple or a set")
+    if flags - ALL_SCRIPT_VERIFY_FLAGS:
+        raise ValueError("unknown flags supplied")
+    if flags - BITCOINCONSENSUS_ACCEPTED_FLAGS:
         raise ValueError(
-            'some of the supplied flags are not handled '
-            'by bitcoinconsensus libary: {}'
-            .format(
-                script_verify_flags_to_string(
-                    flags - BITCOINCONSENSUS_ACCEPTED_FLAGS)))
+            "some of the supplied flags are not handled by bitcoinconsensus libary: {}".format(
+                script_verify_flags_to_string(flags - BITCOINCONSENSUS_ACCEPTED_FLAGS)
+            )
+        )
 
     flags_value = 0
     for f in flags:
@@ -123,7 +127,7 @@ def _add_function_definitions(handle: ctypes.CDLL) -> None:
         ctypes.c_uint,  # unsigned int txToLen
         ctypes.c_uint,  # unsigned int nIn
         ctypes.c_uint,  # unsigned int flags
-        ctypes.POINTER(ctypes.c_uint)  # bitcoinconsensus_error* err
+        ctypes.POINTER(ctypes.c_uint),  # bitcoinconsensus_error* err
     ]
 
     # handle.bitcoinconsensus_verify_script_taproot.restype = ctypes.c_int
@@ -144,9 +148,9 @@ def _add_function_definitions(handle: ctypes.CDLL) -> None:
     handle.bitcoinconsensus_version.argtypes = []
 
 
-def load_bitcoinconsensus_library(library_name: Optional[str] = None,
-                                  path: Optional[str] = None
-                                  ) -> ctypes.CDLL:
+def load_bitcoinconsensus_library(
+    library_name: Optional[str] = None, path: Optional[str] = None
+) -> ctypes.CDLL:
     """load libsbitcoinconsenssus via ctypes, add default function definitions
     to the library handle, and return this handle.
 
@@ -162,29 +166,29 @@ def load_bitcoinconsensus_library(library_name: Optional[str] = None,
     """
     if path:
         if library_name is not None:
-            raise ValueError(
-                'Either path or library_name must be supplied, but not both')
+            raise ValueError("Either path or library_name must be supplied, but not both")
     else:
         if library_name is None:
-            library_name = 'bitcoinconsensus'
+            library_name = "bitcoinconsensus"
 
         path = ctypes.util.find_library(library_name)
         if path is None:
-            raise ImportError('consensus library not found')
+            raise ImportError("consensus library not found")
 
     try:
         handle = ctypes.cdll.LoadLibrary(path)
     except Exception as e:
-        raise ImportError('Cannot import consensus library: {}'.format(e))
+        raise ImportError("Cannot import consensus library: {}".format(e))
 
     _add_function_definitions(handle)
 
     lib_version = handle.bitcoinconsensus_version()
     if lib_version != BITCOINCONSENSUS_API_VER:
-        raise ImportError('bitcoinconsensus_version returned {}, '
-                          'while this library only knows how to work with '
-                          'version {}'.format(lib_version,
-                                              BITCOINCONSENSUS_API_VER))
+        raise ImportError(
+            "bitcoinconsensus_version returned {}, "
+            "while this library only knows how to work with "
+            "version {}".format(lib_version, BITCOINCONSENSUS_API_VER)
+        )
 
     return handle
 
@@ -194,14 +198,12 @@ def ConsensusVerifyScript(
     scriptPubKey: CScript,
     txTo: CTransaction,
     inIdx: int,
-    flags: Union[Tuple[ScriptVerifyFlag_Type, ...],
-                 Set[ScriptVerifyFlag_Type]] = (),
+    flags: Union[Tuple[ScriptVerifyFlag_Type, ...], Set[ScriptVerifyFlag_Type]] = (),
     amount: int = 0,
     witness: Optional[CScriptWitness] = None,
     spent_outputs: Optional[Sequence[CTxOut]] = None,
-    consensus_library_hanlde: Optional[ctypes.CDLL] = None
+    consensus_library_hanlde: Optional[ctypes.CDLL] = None,
 ) -> None:
-
     """Verify a scriptSig satisfies a scriptPubKey, via libbitcoinconsensus
     `bitcoinconsensus_verify_script_with_amount()` function.
 
@@ -238,26 +240,27 @@ def ConsensusVerifyScript(
     global _libbitcoin_consensus
 
     if not MoneyRange(amount):
-        raise ValueError('amount out of MoneyRange')
+        raise ValueError("amount out of MoneyRange")
 
-    ensure_isinstance(scriptSig, CScript, 'scriptSig')
+    ensure_isinstance(scriptSig, CScript, "scriptSig")
     if not type(scriptSig) == type(scriptPubKey):  # noqa: exact class check
-        raise TypeError(
-            "scriptSig and scriptPubKey must be of the same script class")
+        raise TypeError("scriptSig and scriptPubKey must be of the same script class")
 
     if txTo.vin[inIdx].scriptSig != scriptSig:
         raise ValueError(
-            f'supplied scriptSig is not present in input {inIdx} of '
-            f'the supplied transaction')
+            f"supplied scriptSig is not present in input {inIdx} of the supplied transaction"
+        )
 
     if witness is not None:
-        ensure_isinstance(witness, CScriptWitness, 'witness')
-        if not txTo.wit.vtxinwit[inIdx].scriptWitness.is_null() \
-                and txTo.wit.vtxinwit[inIdx].scriptWitness != witness:
+        ensure_isinstance(witness, CScriptWitness, "witness")
+        if (
+            not txTo.wit.vtxinwit[inIdx].scriptWitness.is_null()
+            and txTo.wit.vtxinwit[inIdx].scriptWitness != witness
+        ):
             raise ValueError(
-                'transaction has witness for input {}, '
-                'but it is different from what is supplied as witness kwarg'
-                .format(inIdx))
+                "transaction has witness for input {}, "
+                "but it is different from what is supplied as witness kwarg".format(inIdx)
+            )
         txTo = txTo.to_mutable()
         txTo.wit.vtxinwit[inIdx].scriptWitness = witness
 
@@ -287,24 +290,35 @@ def ConsensusVerifyScript(
     error_code.value = 0
 
     if spent_outputs:
-        raise NotImplementedError(
-            'no taproot support for libbitcoinconsensus yet')
+        raise NotImplementedError("no taproot support for libbitcoinconsensus yet")
         if len(spent_outputs) != len(txTo.vin):
-            raise ValueError('number of spent_outputs must equal '
-                             'the number of inputs in transacton')
+            raise ValueError(
+                "number of spent_outputs must equal the number of inputs in transacton"
+            )
 
-        spent_outs_data = b''.join(out.serialize() for out in spent_outputs)
+        spent_outs_data = b"".join(out.serialize() for out in spent_outputs)
         result = handle.bitcoinconsensus_verify_script_taproot(
-            scriptPubKey, len(scriptPubKey), amount,
-            tx_data, len(tx_data), spent_outs_data, len(spent_outs_data),
-            inIdx, libconsensus_flags,
-            ctypes.byref(error_code)
+            scriptPubKey,
+            len(scriptPubKey),
+            amount,
+            tx_data,
+            len(tx_data),
+            spent_outs_data,
+            len(spent_outs_data),
+            inIdx,
+            libconsensus_flags,
+            ctypes.byref(error_code),
         )
     else:
         result = handle.bitcoinconsensus_verify_script_with_amount(
-            scriptPubKey, len(scriptPubKey), amount,
-            tx_data, len(tx_data), inIdx, libconsensus_flags,
-            ctypes.byref(error_code)
+            scriptPubKey,
+            len(scriptPubKey),
+            amount,
+            tx_data,
+            len(tx_data),
+            inIdx,
+            libconsensus_flags,
+            ctypes.byref(error_code),
         )
 
     if result == 1:
@@ -317,18 +331,17 @@ def ConsensusVerifyScript(
 
     if err > BITCOINCONENSUS_LAST_ERROR_VALUE:
         raise RuntimeError(
-            'bitcoinconsensus_verify_script_with_amount failed with '
-            'unknown error code {}'.format(err))
+            "bitcoinconsensus_verify_script_with_amount failed with unknown error code {}".format(
+                err
+            )
+        )
 
     if err != bitcoinconsensus_ERR_OK:
         # The errors returned are all about the input values.
         # Therefore it seems appropriate to raise ValueError here
         raise ValueError(BITCOINCONSENSUS_ERROR_NAMES[err])
 
-    raise VerifyScriptError('script verification failed')
+    raise VerifyScriptError("script verification failed")
 
 
-__all__ = (
-    'load_bitcoinconsensus_library',
-    'ConsensusVerifyScript'
-)
+__all__ = ("load_bitcoinconsensus_library", "ConsensusVerifyScript")

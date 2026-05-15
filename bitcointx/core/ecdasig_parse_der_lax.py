@@ -28,9 +28,7 @@ import ctypes
 
 from typing import Optional
 
-from bitcointx.core.secp256k1 import (
-    get_secp256k1, COMPACT_SIGNATURE_SIZE
-)
+from bitcointx.core.secp256k1 import get_secp256k1, COMPACT_SIGNATURE_SIZE
 
 
 def ecdsa_signature_parse_der_lax(laxinput: bytes) -> Optional[bytes]:  # noqa
@@ -50,8 +48,7 @@ def ecdsa_signature_parse_der_lax(laxinput: bytes) -> Optional[bytes]:  # noqa
     secp256k1 = get_secp256k1()
 
     # Hack to initialize sig with a correctly-parsed but invalid signature. */
-    secp256k1.lib.secp256k1_ecdsa_signature_parse_compact(
-        secp256k1.ctx.verify, sig, bytes(tmpsig))
+    secp256k1.lib.secp256k1_ecdsa_signature_parse_compact(secp256k1.ctx.verify, sig, bytes(tmpsig))
 
     # Sequence tag byte
     if pos == inputlen or laxinput[pos] != 0x30:
@@ -161,7 +158,7 @@ def ecdsa_signature_parse_der_lax(laxinput: bytes) -> Optional[bytes]:  # noqa
     if rlen > 32:
         overflow = 1
     else:
-        tmpsig[32-rlen:32] = laxinput[rpos:rpos+rlen]
+        tmpsig[32 - rlen : 32] = laxinput[rpos : rpos + rlen]
 
     # Ignore leading zeroes in S
     while slen > 0 and laxinput[spos] == 0:
@@ -172,11 +169,12 @@ def ecdsa_signature_parse_der_lax(laxinput: bytes) -> Optional[bytes]:  # noqa
     if slen > 32:
         overflow = 1
     else:
-        tmpsig[64-slen:64] = laxinput[spos:spos+slen]
+        tmpsig[64 - slen : 64] = laxinput[spos : spos + slen]
 
     if not overflow:
         parse_result = secp256k1.lib.secp256k1_ecdsa_signature_parse_compact(
-            secp256k1.ctx.verify, sig, bytes(tmpsig))
+            secp256k1.ctx.verify, sig, bytes(tmpsig)
+        )
         overflow = int(not parse_result)
 
     if overflow:
@@ -184,6 +182,7 @@ def ecdsa_signature_parse_der_lax(laxinput: bytes) -> Optional[bytes]:  # noqa
         # signature if parsing failed.
         tmpsig = bytearray([0 for _ in range(64)])
         secp256k1.lib.secp256k1_ecdsa_signature_parse_compact(
-            secp256k1.ctx.verify, sig, bytes(tmpsig))
+            secp256k1.ctx.verify, sig, bytes(tmpsig)
+        )
 
     return sig.raw

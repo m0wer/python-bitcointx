@@ -32,30 +32,28 @@ from dataclasses import dataclass
 import bitcointx.util
 
 
-PUBLIC_KEY_SIZE             = 65
-COMPRESSED_PUBLIC_KEY_SIZE  = 33
-SIGNATURE_SIZE              = 72
-COMPACT_SIGNATURE_SIZE      = 65
+PUBLIC_KEY_SIZE = 65
+COMPRESSED_PUBLIC_KEY_SIZE = 33
+SIGNATURE_SIZE = 72
+COMPACT_SIGNATURE_SIZE = 65
 
 
 class Libsecp256k1Exception(EnvironmentError):
     pass
 
 
-SECP256K1_FLAGS_TYPE_CONTEXT = (1 << 0)
-SECP256K1_FLAGS_BIT_CONTEXT_SIGN = (1 << 9)
-SECP256K1_FLAGS_BIT_CONTEXT_VERIFY = (1 << 8)
+SECP256K1_FLAGS_TYPE_CONTEXT = 1 << 0
+SECP256K1_FLAGS_BIT_CONTEXT_SIGN = 1 << 9
+SECP256K1_FLAGS_BIT_CONTEXT_VERIFY = 1 << 8
 
-SECP256K1_CONTEXT_SIGN = \
-    (SECP256K1_FLAGS_TYPE_CONTEXT | SECP256K1_FLAGS_BIT_CONTEXT_SIGN)
-SECP256K1_CONTEXT_VERIFY = \
-    (SECP256K1_FLAGS_TYPE_CONTEXT | SECP256K1_FLAGS_BIT_CONTEXT_VERIFY)
+SECP256K1_CONTEXT_SIGN = SECP256K1_FLAGS_TYPE_CONTEXT | SECP256K1_FLAGS_BIT_CONTEXT_SIGN
+SECP256K1_CONTEXT_VERIFY = SECP256K1_FLAGS_TYPE_CONTEXT | SECP256K1_FLAGS_BIT_CONTEXT_VERIFY
 
-SECP256K1_FLAGS_TYPE_COMPRESSION = (1 << 1)
-SECP256K1_FLAGS_BIT_COMPRESSION = (1 << 8)
+SECP256K1_FLAGS_TYPE_COMPRESSION = 1 << 1
+SECP256K1_FLAGS_BIT_COMPRESSION = 1 << 8
 
-SECP256K1_EC_COMPRESSED = (SECP256K1_FLAGS_TYPE_COMPRESSION | SECP256K1_FLAGS_BIT_COMPRESSION)
-SECP256K1_EC_UNCOMPRESSED = (SECP256K1_FLAGS_TYPE_COMPRESSION)
+SECP256K1_EC_COMPRESSED = SECP256K1_FLAGS_TYPE_COMPRESSION | SECP256K1_FLAGS_BIT_COMPRESSION
+SECP256K1_EC_UNCOMPRESSED = SECP256K1_FLAGS_TYPE_COMPRESSION
 
 
 class Secp256k1LastErrorContextVar(bitcointx.util.ContextVarsCompat):
@@ -64,7 +62,7 @@ class Secp256k1LastErrorContextVar(bitcointx.util.ContextVarsCompat):
 
 _secp256k1_error_storage = Secp256k1LastErrorContextVar(last_error=None)
 
-_ctypes_functype = getattr(ctypes, 'WINFUNCTYPE', getattr(ctypes, 'CFUNCTYPE'))
+_ctypes_functype = getattr(ctypes, "WINFUNCTYPE", getattr(ctypes, "CFUNCTYPE"))
 
 
 class secp256k1_context_type:
@@ -73,23 +71,25 @@ class secp256k1_context_type:
 
 @_ctypes_functype(ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p)
 def _secp256k1_illegal_callback_fn(error_str, _data):  # type: ignore
-    _secp256k1_error_storage.last_error = {'code': -2, 'type': 'illegal_argument', 'message': str(error_str)}
+    _secp256k1_error_storage.last_error = {
+        "code": -2,
+        "type": "illegal_argument",
+        "message": str(error_str),
+    }
 
 
 def secp256k1_get_last_error() -> Dict[str, Union[int, str]]:
-    return cast(Dict[str, Union[int, str]],
-                getattr(_secp256k1_error_storage, 'last_error', None))
+    return cast(Dict[str, Union[int, str]], getattr(_secp256k1_error_storage, "last_error", None))
 
 
-def _check_ressecp256k1_void_p(val: int, _func: FunctionType,
-                               _args: Any) -> ctypes.c_void_p:
+def _check_ressecp256k1_void_p(val: int, _func: FunctionType, _args: Any) -> ctypes.c_void_p:
     if val == 0:
-        err = getattr(_secp256k1_error_storage, 'last_error', None)
+        err = getattr(_secp256k1_error_storage, "last_error", None)
         if err is None:
             raise Libsecp256k1Exception(
-                -3, ('error handling callback function was not called, '
-                     'error is not known'))
-        raise Libsecp256k1Exception(err['code'], err['message'])
+                -3, ("error handling callback function was not called, error is not known")
+            )
+        raise Libsecp256k1Exception(err["code"], err["message"])
     return ctypes.c_void_p(val)
 
 
@@ -142,22 +142,48 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
     has_xonly_pubkeys = False
     has_schnorrsig = False
 
-    if getattr(lib, 'secp256k1_ecdsa_sign_recoverable', None):
+    if getattr(lib, "secp256k1_ecdsa_sign_recoverable", None):
         has_pubkey_recovery = True
         lib.secp256k1_ecdsa_sign_recoverable.restype = ctypes.c_int
-        lib.secp256k1_ecdsa_sign_recoverable.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_void_p]
+        lib.secp256k1_ecdsa_sign_recoverable.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+        ]
 
         lib.secp256k1_ecdsa_recoverable_signature_serialize_compact.restype = ctypes.c_int
-        lib.secp256k1_ecdsa_recoverable_signature_serialize_compact.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int), ctypes.c_char_p]
+        lib.secp256k1_ecdsa_recoverable_signature_serialize_compact.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_char_p,
+        ]
 
         lib.secp256k1_ecdsa_signature_serialize_compact.restype = ctypes.c_int
-        lib.secp256k1_ecdsa_signature_serialize_compact.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+        lib.secp256k1_ecdsa_signature_serialize_compact.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+        ]
 
         lib.secp256k1_ecdsa_recover.restype = ctypes.c_int
-        lib.secp256k1_ecdsa_recover.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]
+        lib.secp256k1_ecdsa_recover.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+        ]
 
         lib.secp256k1_ecdsa_recoverable_signature_parse_compact.restype = ctypes.c_int
-        lib.secp256k1_ecdsa_recoverable_signature_parse_compact.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int]
+        lib.secp256k1_ecdsa_recoverable_signature_parse_compact.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_int,
+        ]
 
     lib.secp256k1_context_create.restype = ctypes.c_void_p
     lib.secp256k1_context_create.errcheck = _check_ressecp256k1_void_p  # type: ignore
@@ -167,13 +193,29 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
     lib.secp256k1_context_randomize.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
 
     lib.secp256k1_context_set_illegal_callback.restype = None
-    lib.secp256k1_context_set_illegal_callback.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+    lib.secp256k1_context_set_illegal_callback.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+    ]
 
     lib.secp256k1_ecdsa_sign.restype = ctypes.c_int
-    lib.secp256k1_ecdsa_sign.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_void_p]
+    lib.secp256k1_ecdsa_sign.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+    ]
 
     lib.secp256k1_ecdsa_signature_serialize_der.restype = ctypes.c_int
-    lib.secp256k1_ecdsa_signature_serialize_der.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_size_t), ctypes.c_char_p]
+    lib.secp256k1_ecdsa_signature_serialize_der.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_char_p,
+        ctypes.POINTER(ctypes.c_size_t),
+        ctypes.c_char_p,
+    ]
 
     lib.secp256k1_ec_pubkey_create.restype = ctypes.c_int
     lib.secp256k1_ec_pubkey_create.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
@@ -182,19 +224,42 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
     lib.secp256k1_ec_seckey_verify.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
 
     lib.secp256k1_ecdsa_signature_parse_der.restype = ctypes.c_int
-    lib.secp256k1_ecdsa_signature_parse_der.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t]
+    lib.secp256k1_ecdsa_signature_parse_der.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+        ctypes.c_size_t,
+    ]
 
     lib.secp256k1_ecdsa_signature_parse_compact.restype = ctypes.c_int
-    lib.secp256k1_ecdsa_signature_parse_compact.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+    lib.secp256k1_ecdsa_signature_parse_compact.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+    ]
 
     lib.secp256k1_ecdsa_signature_normalize.restype = ctypes.c_int
-    lib.secp256k1_ecdsa_signature_normalize.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+    lib.secp256k1_ecdsa_signature_normalize.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+    ]
 
     lib.secp256k1_ecdsa_verify.restype = ctypes.c_int
-    lib.secp256k1_ecdsa_verify.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]
+    lib.secp256k1_ecdsa_verify.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+    ]
 
     lib.secp256k1_ec_pubkey_parse.restype = ctypes.c_int
-    lib.secp256k1_ec_pubkey_parse.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t]
+    lib.secp256k1_ec_pubkey_parse.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+        ctypes.c_size_t,
+    ]
 
     lib.secp256k1_ec_pubkey_tweak_add.restype = ctypes.c_int
     lib.secp256k1_ec_pubkey_tweak_add.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
@@ -204,7 +269,7 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
     # library handle so callers can use either spelling regardless of which
     # symbol the underlying library exports.
     # See: https://github.com/Simplexum/python-bitcointx/issues/88
-    if getattr(lib, 'secp256k1_ec_seckey_tweak_add', None):
+    if getattr(lib, "secp256k1_ec_seckey_tweak_add", None):
         _tweak_add = lib.secp256k1_ec_seckey_tweak_add
     else:
         _tweak_add = lib.secp256k1_ec_privkey_tweak_add
@@ -214,18 +279,23 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
     lib.secp256k1_ec_seckey_tweak_add = _tweak_add  # type: ignore[attr-defined]
 
     lib.secp256k1_ec_pubkey_serialize.restype = ctypes.c_int
-    lib.secp256k1_ec_pubkey_serialize.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_size_t), ctypes.c_char_p, ctypes.c_uint]
+    lib.secp256k1_ec_pubkey_serialize.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_char_p,
+        ctypes.POINTER(ctypes.c_size_t),
+        ctypes.c_char_p,
+        ctypes.c_uint,
+    ]
 
-    if getattr(lib, 'secp256k1_ec_pubkey_negate', None):
+    if getattr(lib, "secp256k1_ec_pubkey_negate", None):
         has_pubkey_negate = True
         lib.secp256k1_ec_pubkey_negate.restype = ctypes.c_int
         lib.secp256k1_ec_pubkey_negate.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
 
     # libsecp256k1 v0.7.0 renamed `secp256k1_ec_privkey_negate` to
     # `secp256k1_ec_seckey_negate`. Expose under both names for compatibility.
-    _negate = (
-        getattr(lib, 'secp256k1_ec_seckey_negate', None)
-        or getattr(lib, 'secp256k1_ec_privkey_negate', None)
+    _negate = getattr(lib, "secp256k1_ec_seckey_negate", None) or getattr(
+        lib, "secp256k1_ec_privkey_negate", None
     )
     if _negate is not None:
         has_privkey_negate = True
@@ -235,43 +305,100 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
         lib.secp256k1_ec_seckey_negate = _negate  # type: ignore[attr-defined]
 
     lib.secp256k1_ec_pubkey_combine.restype = ctypes.c_int
-    lib.secp256k1_ec_pubkey_combine.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_char_p), ctypes.c_int]
+    lib.secp256k1_ec_pubkey_combine.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_char_p,
+        ctypes.POINTER(ctypes.c_char_p),
+        ctypes.c_int,
+    ]
 
-    if getattr(lib, 'secp256k1_ecdh', None):
+    if getattr(lib, "secp256k1_ecdh", None):
         has_ecdh = True
         lib.secp256k1_ecdh.restype = ctypes.c_int
-        lib.secp256k1_ecdh.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_void_p]
+        lib.secp256k1_ecdh.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+        ]
 
-    if getattr(lib, 'secp256k1_xonly_pubkey_parse', None):
+    if getattr(lib, "secp256k1_xonly_pubkey_parse", None):
         has_xonly_pubkeys = True
         lib.secp256k1_xonly_pubkey_parse.restype = ctypes.c_int
-        lib.secp256k1_xonly_pubkey_parse.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+        lib.secp256k1_xonly_pubkey_parse.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+        ]
         lib.secp256k1_xonly_pubkey_tweak_add_check.restype = ctypes.c_int
-        lib.secp256k1_xonly_pubkey_tweak_add_check.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p]
+        lib.secp256k1_xonly_pubkey_tweak_add_check.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+        ]
         lib.secp256k1_xonly_pubkey_tweak_add.restype = ctypes.c_int
-        lib.secp256k1_xonly_pubkey_tweak_add.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]
+        lib.secp256k1_xonly_pubkey_tweak_add.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+        ]
         lib.secp256k1_xonly_pubkey_from_pubkey.restype = ctypes.c_int
-        lib.secp256k1_xonly_pubkey_from_pubkey.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int), ctypes.c_char_p]
+        lib.secp256k1_xonly_pubkey_from_pubkey.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_char_p,
+        ]
         lib.secp256k1_xonly_pubkey_serialize.restype = ctypes.c_int
-        lib.secp256k1_xonly_pubkey_serialize.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+        lib.secp256k1_xonly_pubkey_serialize.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+        ]
         lib.secp256k1_keypair_create.restype = ctypes.c_int
         lib.secp256k1_keypair_create.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
         lib.secp256k1_keypair_xonly_pub.restype = ctypes.c_int
-        lib.secp256k1_keypair_xonly_pub.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int), ctypes.c_char_p]
+        lib.secp256k1_keypair_xonly_pub.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.POINTER(ctypes.c_int),
+            ctypes.c_char_p,
+        ]
         lib.secp256k1_keypair_xonly_tweak_add.restype = ctypes.c_int
-        lib.secp256k1_keypair_xonly_tweak_add.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+        lib.secp256k1_keypair_xonly_tweak_add.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+        ]
 
     # Note that we check specifically for secp256k1_schnorrsig_sign_custom
     # to avoid incompatibility with earlier version of libsecp256k1.
     # Before secp256k1_schnorrsig_sign_custom was itroduced,
     # secp256k1_schnorrsig_sign had different signature, and using it
     # with this signature will result in segfault.
-    if getattr(lib, 'secp256k1_schnorrsig_sign_custom', None):
+    if getattr(lib, "secp256k1_schnorrsig_sign_custom", None):
         has_schnorrsig = True
         lib.secp256k1_schnorrsig_verify.restype = ctypes.c_int
-        lib.secp256k1_schnorrsig_verify.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p]
+        lib.secp256k1_schnorrsig_verify.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_int,
+            ctypes.c_char_p,
+        ]
         lib.secp256k1_schnorrsig_sign.restype = ctypes.c_int
-        lib.secp256k1_schnorrsig_sign.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]
+        lib.secp256k1_schnorrsig_sign.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+            ctypes.c_char_p,
+        ]
 
     return Secp256k1_Capabilities(
         has_pubkey_recovery=has_pubkey_recovery,
@@ -279,21 +406,25 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
         has_pubkey_negate=has_pubkey_negate,
         has_ecdh=has_ecdh,
         has_xonly_pubkeys=has_xonly_pubkeys,
-        has_schnorrsig=has_schnorrsig)
+        has_schnorrsig=has_schnorrsig,
+    )
 
 
-def secp256k1_create_and_init_context(lib: ctypes.CDLL, flags: int
-                                      ) -> secp256k1_context_type:
-    if flags not in (SECP256K1_CONTEXT_SIGN, SECP256K1_CONTEXT_VERIFY,
-                     (SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY)):
+def secp256k1_create_and_init_context(lib: ctypes.CDLL, flags: int) -> secp256k1_context_type:
+    if flags not in (
+        SECP256K1_CONTEXT_SIGN,
+        SECP256K1_CONTEXT_VERIFY,
+        (SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY),
+    ):
         raise ValueError(
-            'Value for flags is unexpected. '
-            'Must be either SECP256K1_CONTEXT_SIGN, SECP256K1_CONTEXT_VERIFY, '
-            'or a combination of these two')
+            "Value for flags is unexpected. "
+            "Must be either SECP256K1_CONTEXT_SIGN, SECP256K1_CONTEXT_VERIFY, "
+            "or a combination of these two"
+        )
 
     ctx = lib.secp256k1_context_create(flags)
     if ctx is None:
-        raise RuntimeError('secp256k1_context_create() returned None')
+        raise RuntimeError("secp256k1_context_create() returned None")
 
     lib.secp256k1_context_set_illegal_callback(ctx, _secp256k1_illegal_callback_fn, 0)
 
@@ -308,7 +439,7 @@ def secp256k1_create_and_init_context(lib: ctypes.CDLL, flags: int
         if (flags & SECP256K1_CONTEXT_SIGN) == SECP256K1_CONTEXT_SIGN:
             raise RuntimeError("secp256k1 context randomization failed")
         elif flags != SECP256K1_CONTEXT_VERIFY:
-            raise AssertionError('unexpected value for flags')
+            raise AssertionError("unexpected value for flags")
 
     return cast(secp256k1_context_type, ctx)
 
@@ -334,32 +465,33 @@ def secp256k1_load_library(path: Optional[str] = None) -> Secp256k1:
     """
 
     if path is None:
-        path = ctypes.util.find_library('secp256k1')
+        path = ctypes.util.find_library("secp256k1")
         if path is None:
-            raise ImportError('secp256k1 library not found')
+            raise ImportError("secp256k1 library not found")
 
     try:
         handle = ctypes.cdll.LoadLibrary(path)
     except Exception as e:
-        raise ImportError('Cannot load secp256k1 library: {}'.format(e))
+        raise ImportError("Cannot load secp256k1 library: {}".format(e))
 
     cap = _add_function_definitions(handle)
     ctx = Secp256k1_Contexts(
         sign=secp256k1_create_and_init_context(handle, SECP256K1_CONTEXT_SIGN),
-        verify=secp256k1_create_and_init_context(handle, SECP256K1_CONTEXT_VERIFY))
+        verify=secp256k1_create_and_init_context(handle, SECP256K1_CONTEXT_VERIFY),
+    )
 
     return Secp256k1(lib=handle, ctx=ctx, cap=cap)
 
 
 __all__ = (
-    'secp256k1_load_library',
-    'SIGNATURE_SIZE',
-    'COMPACT_SIGNATURE_SIZE',
-    'PUBLIC_KEY_SIZE',
-    'COMPRESSED_PUBLIC_KEY_SIZE',
-    'SECP256K1_EC_COMPRESSED',
-    'SECP256K1_EC_UNCOMPRESSED',
-    'SECP256K1_CONTEXT_SIGN',
-    'SECP256K1_CONTEXT_VERIFY',
-    'get_secp256k1',
+    "secp256k1_load_library",
+    "SIGNATURE_SIZE",
+    "COMPACT_SIGNATURE_SIZE",
+    "PUBLIC_KEY_SIZE",
+    "COMPRESSED_PUBLIC_KEY_SIZE",
+    "SECP256K1_EC_COMPRESSED",
+    "SECP256K1_EC_UNCOMPRESSED",
+    "SECP256K1_CONTEXT_SIGN",
+    "SECP256K1_CONTEXT_VERIFY",
+    "get_secp256k1",
 )

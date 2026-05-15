@@ -18,19 +18,25 @@ import hashlib
 
 from bitcointx import select_chain_params
 from bitcointx.core import (
-    b2x, lx, COutPoint, CMutableTxOut, CMutableTxIn, CMutableTransaction,
-    CoreCoinParams, coins_to_satoshi
+    b2x,
+    lx,
+    COutPoint,
+    CMutableTxOut,
+    CMutableTxIn,
+    CMutableTransaction,
+    CoreCoinParams,
+    coins_to_satoshi,
 )
 from bitcointx.core.script import CScript, SignatureHash, SIGHASH_ALL
 from bitcointx.core.scripteval import VerifyScript
 from bitcointx.wallet import CBitcoinAddress, P2PKHBitcoinAddress, CBitcoinKey
 
-select_chain_params('bitcoin')
+select_chain_params("bitcoin")
 
 COIN = CoreCoinParams.COIN
 
 # Create the (in)famous correct brainwallet secret key.
-h = hashlib.sha256(b'correct horse battery staple').digest()
+h = hashlib.sha256(b"correct horse battery staple").digest()
 seckey = CBitcoinKey.from_secret_bytes(h)
 
 # Same as the txid:vout the createrawtransaction RPC call requires
@@ -39,7 +45,7 @@ seckey = CBitcoinKey.from_secret_bytes(h)
 # transaction hashes are shown little-endian rather than the usual big-endian.
 # There's also a corresponding x() convenience function that takes big-endian
 # hex and converts it to bytes.
-txid = lx('7e195aa3de827814f172c362fcf838d92ba10e3f9fdd9c3ecaf79522b311b22d')
+txid = lx("7e195aa3de827814f172c362fcf838d92ba10e3f9fdd9c3ecaf79522b311b22d")
 vout = 0
 
 # Create the txin structure, which includes the outpoint. The scriptSig
@@ -51,14 +57,13 @@ txin = CMutableTxIn(COutPoint(txid, vout))
 #
 # Here we'll create that scriptPubKey from scratch using the pubkey that
 # corresponds to the secret key we generated above.
-txin_scriptPubKey = \
-    P2PKHBitcoinAddress.from_pubkey(seckey.pub).to_scriptPubKey()
+txin_scriptPubKey = P2PKHBitcoinAddress.from_pubkey(seckey.pub).to_scriptPubKey()
 
 # Create the txout. This time we create the scriptPubKey from a Bitcoin
 # address.
-txout = CMutableTxOut(coins_to_satoshi(0.001),
-                      CBitcoinAddress('1C7zdTfnkzmr13HfA2vNm5SJYRK6nEKyq8'
-                                      ).to_scriptPubKey())
+txout = CMutableTxOut(
+    coins_to_satoshi(0.001), CBitcoinAddress("1C7zdTfnkzmr13HfA2vNm5SJYRK6nEKyq8").to_scriptPubKey()
+)
 
 # Create the unsigned transaction.
 tx = CMutableTransaction([txin], [txout])

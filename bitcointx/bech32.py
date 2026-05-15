@@ -18,8 +18,8 @@ import bitcointx.core
 from bitcointx.segwit_addr import encode, decode
 
 
-T_CBech32Data = TypeVar('T_CBech32Data', bound='CBech32Data')
-T_unbounded = TypeVar('T_unbounded')
+T_CBech32Data = TypeVar("T_CBech32Data", bound="CBech32Data")
+T_unbounded = TypeVar("T_unbounded")
 
 
 class Bech32Error(bitcointx.core.AddressDataEncodingError):
@@ -42,19 +42,19 @@ class CBech32Data(bytes):
 
     Includes a witver and checksum.
     """
+
     bech32_hrp: str
     bech32_witness_version: int = -1
     _data_length: int
 
     def __new__(cls: Type[T_CBech32Data], s: str) -> T_CBech32Data:
-        """from bech32 addr to """
+        """from bech32 addr to"""
         if cls.bech32_hrp is None:
-            raise TypeError(
-                'CBech32Data subclasses should define bech32_hrp attribute')
+            raise TypeError("CBech32Data subclasses should define bech32_hrp attribute")
         witver, data = decode(cls.bech32_hrp, s)
         if witver is None or data is None:
             assert witver is None and data is None
-            raise Bech32Error('Bech32 decoding error')
+            raise Bech32Error("Bech32 decoding error")
 
         return cls.bech32_match_progam_and_version(data, witver)
 
@@ -67,16 +67,15 @@ class CBech32Data(bytes):
         """
 
     @classmethod
-    def bech32_get_match_candidates(cls: Type[T_CBech32Data]
-                                    ) -> List[Type[T_CBech32Data]]:
+    def bech32_get_match_candidates(cls: Type[T_CBech32Data]) -> List[Type[T_CBech32Data]]:
         if cls.bech32_witness_version >= 0:
             return [cls]
         return []
 
     @classmethod
-    def bech32_match_progam_and_version(cls: Type[T_CBech32Data],
-                                        data: bytes, witver: int
-                                        ) -> T_CBech32Data:
+    def bech32_match_progam_and_version(
+        cls: Type[T_CBech32Data], data: bytes, witver: int
+    ) -> T_CBech32Data:
         """Instantiate from data and witver.
         if witver is not set for class, this is equivalent of from_bytes()"""
         candidates = cls.bech32_get_match_candidates()
@@ -87,8 +86,7 @@ class CBech32Data(bytes):
             wv = candidate.bech32_witness_version
             if wv < 0:
                 try:
-                    return candidate.bech32_match_progam_and_version(
-                        data, witver)
+                    return candidate.bech32_match_progam_and_version(data, witver)
                 except UnexpectedBech32LenghOrVersion:
                     pass
             elif len(data) == candidate._data_length and witver == wv:
@@ -96,36 +94,38 @@ class CBech32Data(bytes):
 
         if len(candidates) == 1:
             raise UnexpectedBech32LenghOrVersion(
-                f'Incorrect length/version for {cls.__name__}: '
-                f'{len(data)}/{witver}, expected '
-                f'{cls._data_length}/{cls.bech32_witness_version}')
+                f"Incorrect length/version for {cls.__name__}: "
+                f"{len(data)}/{witver}, expected "
+                f"{cls._data_length}/{cls.bech32_witness_version}"
+            )
 
         raise UnexpectedBech32LenghOrVersion(
-            'witness program or version does not match any known Bech32 '
-            'address class')
+            "witness program or version does not match any known Bech32 address class"
+        )
 
     @classmethod
-    def from_bytes(cls: Type[T_unbounded], witprog: bytes,
-                   witver: Optional[int] = None) -> T_unbounded:
+    def from_bytes(
+        cls: Type[T_unbounded], witprog: bytes, witver: Optional[int] = None
+    ) -> T_unbounded:
         """Instantiate from witver and data"""
         assert issubclass(cls, CBech32Data)
         cls_wv = cls.bech32_witness_version
         if witver is None:
             if cls_wv < 0:
                 raise ValueError(
-                    f'witver must be specified, {cls.__name__} does not '
-                    f'specify bech32_witness_version')
+                    f"witver must be specified, {cls.__name__} does not "
+                    f"specify bech32_witness_version"
+                )
             witver = cls_wv
         elif witver < 0:
-            raise ValueError('negative witver specified')
+            raise ValueError("negative witver specified")
         elif cls_wv >= 0 and witver != cls_wv:
             raise ValueError(
-                f'witver specified but is not the same as '
-                f'{cls.__name__}.bech32_witness_version')
+                f"witver specified but is not the same as {cls.__name__}.bech32_witness_version"
+            )
 
         if not (0 <= witver <= 16):
-            raise ValueError(
-                'witver must be in range 0 to 16 inclusive; got %r' % witver)
+            raise ValueError("witver must be in range 0 to 16 inclusive; got %r" % witver)
 
         self = bytes.__new__(cls, witprog)
         if cls_wv < 0:
@@ -140,23 +140,23 @@ class CBech32Data(bytes):
         Note that it's the data represented that is converted; the checkum and
         witver is not included.
         """
-        return b'' + self
+        return b"" + self
 
     def __str__(self) -> str:
         """Convert to string"""
         result = encode(self.bech32_hrp, self.bech32_witness_version, self)
         if result is None:
             raise AssertionError(
-                'encode should not fail, this is data that '
-                'was successfully decoded earlier')
+                "encode should not fail, this is data that was successfully decoded earlier"
+            )
         return result
 
     def __repr__(self) -> str:
-        return '%s(%r)' % (self.__class__.__name__, str(self))
+        return "%s(%r)" % (self.__class__.__name__, str(self))
 
 
 __all__ = (
-    'Bech32Error',
-    'Bech32ChecksumError',
-    'CBech32Data',
+    "Bech32Error",
+    "Bech32ChecksumError",
+    "CBech32Data",
 )

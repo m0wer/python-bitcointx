@@ -58,8 +58,9 @@ def uint32(x: int) -> int:
 
 
 # One round of SHA-256.
-def Round(a: int, b: int, c: int, d: int, e: int, f: int, g: int, h: int,
-          k: int, w: int, x: List[int]) -> None:
+def Round(
+    a: int, b: int, c: int, d: int, e: int, f: int, g: int, h: int, k: int, w: int, x: List[int]
+) -> None:
     t1 = uint32(x[h] + Sigma1(x[e]) + Ch(x[e], x[f], x[g]) + k + w)
     t2 = uint32(Sigma0(x[a]) + Maj(x[a], x[b], x[c]))
     x[d] = uint32(x[d] + t1)
@@ -70,10 +71,10 @@ def ReadBE32(buf: bytes) -> int:
     return int(struct.unpack(b">I", buf[:4])[0])
 
 
-T_CSHA256 = TypeVar('T_CSHA256', bound='CSHA256')
+T_CSHA256 = TypeVar("T_CSHA256", bound="CSHA256")
 
 
-class CSHA256():
+class CSHA256:
     """
     This class provides access to SHA256 routines, with access to
     SHA256 midstate (which is not available from hashlib.sha256)
@@ -83,7 +84,7 @@ class CSHA256():
     code), etc.
     """
 
-    __slots__ = ['s', 'buf', 'bytes_count']
+    __slots__ = ["s", "buf", "bytes_count"]
 
     buf: bytes
     bytes_count: int
@@ -96,9 +97,9 @@ class CSHA256():
     # Perform a number of SHA-256 transformations, processing 64-byte chunks.
     def Transform(self, chunk: Union[bytes, bytearray], blocks: int) -> None:
         if not isinstance(blocks, int):
-            raise TypeError('blocks must be an instance of int')
+            raise TypeError("blocks must be an instance of int")
         if not isinstance(chunk, (bytes, bytearray)):
-            raise TypeError('chunk must be an instance of bytes or bytearray')
+            raise TypeError("chunk must be an instance of bytes or bytearray")
         s = self.s
         while blocks:
             blocks -= 1
@@ -106,134 +107,134 @@ class CSHA256():
             x = s.copy()
 
             w0 = ReadBE32(chunk[0:])
-            Round(a, b, c, d, e, f, g, h, 0x428a2f98, w0, x)
+            Round(a, b, c, d, e, f, g, h, 0x428A2F98, w0, x)
             w1 = ReadBE32(chunk[4:])
             Round(h, a, b, c, d, e, f, g, 0x71374491, w1, x)
             w2 = ReadBE32(chunk[8:])
-            Round(g, h, a, b, c, d, e, f, 0xb5c0fbcf, w2, x)
+            Round(g, h, a, b, c, d, e, f, 0xB5C0FBCF, w2, x)
             w3 = ReadBE32(chunk[12:])
-            Round(f, g, h, a, b, c, d, e, 0xe9b5dba5, w3, x)
+            Round(f, g, h, a, b, c, d, e, 0xE9B5DBA5, w3, x)
             w4 = ReadBE32(chunk[16:])
-            Round(e, f, g, h, a, b, c, d, 0x3956c25b, w4, x)
+            Round(e, f, g, h, a, b, c, d, 0x3956C25B, w4, x)
             w5 = ReadBE32(chunk[20:])
-            Round(d, e, f, g, h, a, b, c, 0x59f111f1, w5, x)
+            Round(d, e, f, g, h, a, b, c, 0x59F111F1, w5, x)
             w6 = ReadBE32(chunk[24:])
-            Round(c, d, e, f, g, h, a, b, 0x923f82a4, w6, x)
+            Round(c, d, e, f, g, h, a, b, 0x923F82A4, w6, x)
             w7 = ReadBE32(chunk[28:])
-            Round(b, c, d, e, f, g, h, a, 0xab1c5ed5, w7, x)
+            Round(b, c, d, e, f, g, h, a, 0xAB1C5ED5, w7, x)
             w8 = ReadBE32(chunk[32:])
-            Round(a, b, c, d, e, f, g, h, 0xd807aa98, w8, x)
+            Round(a, b, c, d, e, f, g, h, 0xD807AA98, w8, x)
             w9 = ReadBE32(chunk[36:])
-            Round(h, a, b, c, d, e, f, g, 0x12835b01, w9, x)
+            Round(h, a, b, c, d, e, f, g, 0x12835B01, w9, x)
             w10 = ReadBE32(chunk[40:])
-            Round(g, h, a, b, c, d, e, f, 0x243185be, w10, x)
+            Round(g, h, a, b, c, d, e, f, 0x243185BE, w10, x)
             w11 = ReadBE32(chunk[44:])
-            Round(f, g, h, a, b, c, d, e, 0x550c7dc3, w11, x)
+            Round(f, g, h, a, b, c, d, e, 0x550C7DC3, w11, x)
             w12 = ReadBE32(chunk[48:])
-            Round(e, f, g, h, a, b, c, d, 0x72be5d74, w12, x)
+            Round(e, f, g, h, a, b, c, d, 0x72BE5D74, w12, x)
             w13 = ReadBE32(chunk[52:])
-            Round(d, e, f, g, h, a, b, c, 0x80deb1fe, w13, x)
+            Round(d, e, f, g, h, a, b, c, 0x80DEB1FE, w13, x)
             w14 = ReadBE32(chunk[56:])
-            Round(c, d, e, f, g, h, a, b, 0x9bdc06a7, w14, x)
+            Round(c, d, e, f, g, h, a, b, 0x9BDC06A7, w14, x)
             w15 = ReadBE32(chunk[60:])
-            Round(b, c, d, e, f, g, h, a, 0xc19bf174, w15, x)
+            Round(b, c, d, e, f, g, h, a, 0xC19BF174, w15, x)
 
             w0 = uint32(w0 + sigma1(w14) + w9 + sigma0(w1))
-            Round(a, b, c, d, e, f, g, h, 0xe49b69c1, w0, x)
+            Round(a, b, c, d, e, f, g, h, 0xE49B69C1, w0, x)
             w1 = uint32(w1 + sigma1(w15) + w10 + sigma0(w2))
-            Round(h, a, b, c, d, e, f, g, 0xefbe4786, w1, x)
+            Round(h, a, b, c, d, e, f, g, 0xEFBE4786, w1, x)
             w2 = uint32(w2 + sigma1(w0) + w11 + sigma0(w3))
-            Round(g, h, a, b, c, d, e, f, 0x0fc19dc6, w2, x)
+            Round(g, h, a, b, c, d, e, f, 0x0FC19DC6, w2, x)
             w3 = uint32(w3 + sigma1(w1) + w12 + sigma0(w4))
-            Round(f, g, h, a, b, c, d, e, 0x240ca1cc, w3, x)
+            Round(f, g, h, a, b, c, d, e, 0x240CA1CC, w3, x)
             w4 = uint32(w4 + sigma1(w2) + w13 + sigma0(w5))
-            Round(e, f, g, h, a, b, c, d, 0x2de92c6f, w4, x)
+            Round(e, f, g, h, a, b, c, d, 0x2DE92C6F, w4, x)
             w5 = uint32(w5 + sigma1(w3) + w14 + sigma0(w6))
-            Round(d, e, f, g, h, a, b, c, 0x4a7484aa, w5, x)
+            Round(d, e, f, g, h, a, b, c, 0x4A7484AA, w5, x)
             w6 = uint32(w6 + sigma1(w4) + w15 + sigma0(w7))
-            Round(c, d, e, f, g, h, a, b, 0x5cb0a9dc, w6, x)
+            Round(c, d, e, f, g, h, a, b, 0x5CB0A9DC, w6, x)
             w7 = uint32(w7 + sigma1(w5) + w0 + sigma0(w8))
-            Round(b, c, d, e, f, g, h, a, 0x76f988da, w7, x)
+            Round(b, c, d, e, f, g, h, a, 0x76F988DA, w7, x)
             w8 = uint32(w8 + sigma1(w6) + w1 + sigma0(w9))
-            Round(a, b, c, d, e, f, g, h, 0x983e5152, w8, x)
+            Round(a, b, c, d, e, f, g, h, 0x983E5152, w8, x)
             w9 = uint32(w9 + sigma1(w7) + w2 + sigma0(w10))
-            Round(h, a, b, c, d, e, f, g, 0xa831c66d, w9, x)
+            Round(h, a, b, c, d, e, f, g, 0xA831C66D, w9, x)
             w10 = uint32(w10 + sigma1(w8) + w3 + sigma0(w11))
-            Round(g, h, a, b, c, d, e, f, 0xb00327c8, w10, x)
+            Round(g, h, a, b, c, d, e, f, 0xB00327C8, w10, x)
             w11 = uint32(w11 + sigma1(w9) + w4 + sigma0(w12))
-            Round(f, g, h, a, b, c, d, e, 0xbf597fc7, w11, x)
+            Round(f, g, h, a, b, c, d, e, 0xBF597FC7, w11, x)
             w12 = uint32(w12 + sigma1(w10) + w5 + sigma0(w13))
-            Round(e, f, g, h, a, b, c, d, 0xc6e00bf3, w12, x)
+            Round(e, f, g, h, a, b, c, d, 0xC6E00BF3, w12, x)
             w13 = uint32(w13 + sigma1(w11) + w6 + sigma0(w14))
-            Round(d, e, f, g, h, a, b, c, 0xd5a79147, w13, x)
+            Round(d, e, f, g, h, a, b, c, 0xD5A79147, w13, x)
             w14 = uint32(w14 + sigma1(w12) + w7 + sigma0(w15))
-            Round(c, d, e, f, g, h, a, b, 0x06ca6351, w14, x)
+            Round(c, d, e, f, g, h, a, b, 0x06CA6351, w14, x)
             w15 = uint32(w15 + sigma1(w13) + w8 + sigma0(w0))
             Round(b, c, d, e, f, g, h, a, 0x14292967, w15, x)
 
             w0 = uint32(w0 + sigma1(w14) + w9 + sigma0(w1))
-            Round(a, b, c, d, e, f, g, h, 0x27b70a85, w0, x)
+            Round(a, b, c, d, e, f, g, h, 0x27B70A85, w0, x)
             w1 = uint32(w1 + sigma1(w15) + w10 + sigma0(w2))
-            Round(h, a, b, c, d, e, f, g, 0x2e1b2138, w1, x)
+            Round(h, a, b, c, d, e, f, g, 0x2E1B2138, w1, x)
             w2 = uint32(w2 + sigma1(w0) + w11 + sigma0(w3))
-            Round(g, h, a, b, c, d, e, f, 0x4d2c6dfc, w2, x)
+            Round(g, h, a, b, c, d, e, f, 0x4D2C6DFC, w2, x)
             w3 = uint32(w3 + sigma1(w1) + w12 + sigma0(w4))
-            Round(f, g, h, a, b, c, d, e, 0x53380d13, w3, x)
+            Round(f, g, h, a, b, c, d, e, 0x53380D13, w3, x)
             w4 = uint32(w4 + sigma1(w2) + w13 + sigma0(w5))
-            Round(e, f, g, h, a, b, c, d, 0x650a7354, w4, x)
+            Round(e, f, g, h, a, b, c, d, 0x650A7354, w4, x)
             w5 = uint32(w5 + sigma1(w3) + w14 + sigma0(w6))
-            Round(d, e, f, g, h, a, b, c, 0x766a0abb, w5, x)
+            Round(d, e, f, g, h, a, b, c, 0x766A0ABB, w5, x)
             w6 = uint32(w6 + sigma1(w4) + w15 + sigma0(w7))
-            Round(c, d, e, f, g, h, a, b, 0x81c2c92e, w6, x)
+            Round(c, d, e, f, g, h, a, b, 0x81C2C92E, w6, x)
             w7 = uint32(w7 + sigma1(w5) + w0 + sigma0(w8))
-            Round(b, c, d, e, f, g, h, a, 0x92722c85, w7, x)
+            Round(b, c, d, e, f, g, h, a, 0x92722C85, w7, x)
             w8 = uint32(w8 + sigma1(w6) + w1 + sigma0(w9))
-            Round(a, b, c, d, e, f, g, h, 0xa2bfe8a1, w8, x)
+            Round(a, b, c, d, e, f, g, h, 0xA2BFE8A1, w8, x)
             w9 = uint32(w9 + sigma1(w7) + w2 + sigma0(w10))
-            Round(h, a, b, c, d, e, f, g, 0xa81a664b, w9, x)
+            Round(h, a, b, c, d, e, f, g, 0xA81A664B, w9, x)
             w10 = uint32(w10 + sigma1(w8) + w3 + sigma0(w11))
-            Round(g, h, a, b, c, d, e, f, 0xc24b8b70, w10, x)
+            Round(g, h, a, b, c, d, e, f, 0xC24B8B70, w10, x)
             w11 = uint32(w11 + sigma1(w9) + w4 + sigma0(w12))
-            Round(f, g, h, a, b, c, d, e, 0xc76c51a3, w11, x)
+            Round(f, g, h, a, b, c, d, e, 0xC76C51A3, w11, x)
             w12 = uint32(w12 + sigma1(w10) + w5 + sigma0(w13))
-            Round(e, f, g, h, a, b, c, d, 0xd192e819, w12, x)
+            Round(e, f, g, h, a, b, c, d, 0xD192E819, w12, x)
             w13 = uint32(w13 + sigma1(w11) + w6 + sigma0(w14))
-            Round(d, e, f, g, h, a, b, c, 0xd6990624, w13, x)
+            Round(d, e, f, g, h, a, b, c, 0xD6990624, w13, x)
             w14 = uint32(w14 + sigma1(w12) + w7 + sigma0(w15))
-            Round(c, d, e, f, g, h, a, b, 0xf40e3585, w14, x)
+            Round(c, d, e, f, g, h, a, b, 0xF40E3585, w14, x)
             w15 = uint32(w15 + sigma1(w13) + w8 + sigma0(w0))
-            Round(b, c, d, e, f, g, h, a, 0x106aa070, w15, x)
+            Round(b, c, d, e, f, g, h, a, 0x106AA070, w15, x)
 
             w0 = uint32(w0 + sigma1(w14) + w9 + sigma0(w1))
-            Round(a, b, c, d, e, f, g, h, 0x19a4c116, w0, x)
+            Round(a, b, c, d, e, f, g, h, 0x19A4C116, w0, x)
             w1 = uint32(w1 + sigma1(w15) + w10 + sigma0(w2))
-            Round(h, a, b, c, d, e, f, g, 0x1e376c08, w1, x)
+            Round(h, a, b, c, d, e, f, g, 0x1E376C08, w1, x)
             w2 = uint32(w2 + sigma1(w0) + w11 + sigma0(w3))
-            Round(g, h, a, b, c, d, e, f, 0x2748774c, w2, x)
+            Round(g, h, a, b, c, d, e, f, 0x2748774C, w2, x)
             w3 = uint32(w3 + sigma1(w1) + w12 + sigma0(w4))
-            Round(f, g, h, a, b, c, d, e, 0x34b0bcb5, w3, x)
+            Round(f, g, h, a, b, c, d, e, 0x34B0BCB5, w3, x)
             w4 = uint32(w4 + sigma1(w2) + w13 + sigma0(w5))
-            Round(e, f, g, h, a, b, c, d, 0x391c0cb3, w4, x)
+            Round(e, f, g, h, a, b, c, d, 0x391C0CB3, w4, x)
             w5 = uint32(w5 + sigma1(w3) + w14 + sigma0(w6))
-            Round(d, e, f, g, h, a, b, c, 0x4ed8aa4a, w5, x)
+            Round(d, e, f, g, h, a, b, c, 0x4ED8AA4A, w5, x)
             w6 = uint32(w6 + sigma1(w4) + w15 + sigma0(w7))
-            Round(c, d, e, f, g, h, a, b, 0x5b9cca4f, w6, x)
+            Round(c, d, e, f, g, h, a, b, 0x5B9CCA4F, w6, x)
             w7 = uint32(w7 + sigma1(w5) + w0 + sigma0(w8))
-            Round(b, c, d, e, f, g, h, a, 0x682e6ff3, w7, x)
+            Round(b, c, d, e, f, g, h, a, 0x682E6FF3, w7, x)
             w8 = uint32(w8 + sigma1(w6) + w1 + sigma0(w9))
-            Round(a, b, c, d, e, f, g, h, 0x748f82ee, w8, x)
+            Round(a, b, c, d, e, f, g, h, 0x748F82EE, w8, x)
             w9 = uint32(w9 + sigma1(w7) + w2 + sigma0(w10))
-            Round(h, a, b, c, d, e, f, g, 0x78a5636f, w9, x)
+            Round(h, a, b, c, d, e, f, g, 0x78A5636F, w9, x)
             w10 = uint32(w10 + sigma1(w8) + w3 + sigma0(w11))
-            Round(g, h, a, b, c, d, e, f, 0x84c87814, w10, x)
+            Round(g, h, a, b, c, d, e, f, 0x84C87814, w10, x)
             w11 = uint32(w11 + sigma1(w9) + w4 + sigma0(w12))
-            Round(f, g, h, a, b, c, d, e, 0x8cc70208, w11, x)
+            Round(f, g, h, a, b, c, d, e, 0x8CC70208, w11, x)
             w12 = uint32(w12 + sigma1(w10) + w5 + sigma0(w13))
-            Round(e, f, g, h, a, b, c, d, 0x90befffa, w12, x)
+            Round(e, f, g, h, a, b, c, d, 0x90BEFFFA, w12, x)
             w13 = uint32(w13 + sigma1(w11) + w6 + sigma0(w14))
-            Round(d, e, f, g, h, a, b, c, 0xa4506ceb, w13, x)
-            Round(c, d, e, f, g, h, a, b, 0xbef9a3f7, w14 + sigma1(w12) + w7 + sigma0(w15), x)
-            Round(b, c, d, e, f, g, h, a, 0xc67178f2, w15 + sigma1(w13) + w8 + sigma0(w0), x)
+            Round(d, e, f, g, h, a, b, c, 0xA4506CEB, w13, x)
+            Round(c, d, e, f, g, h, a, b, 0xBEF9A3F7, w14 + sigma1(w12) + w7 + sigma0(w15), x)
+            Round(b, c, d, e, f, g, h, a, 0xC67178F2, w15 + sigma1(w13) + w8 + sigma0(w0), x)
 
             s[0] = uint32(s[0] + x[a])
             s[1] = uint32(s[1] + x[b])
@@ -248,10 +249,10 @@ class CSHA256():
 
     def Write(self: T_CSHA256, data: Union[bytes, bytearray]) -> T_CSHA256:
         if not isinstance(data, (bytes, bytearray)):
-            raise TypeError('data must be instance of bytes or bytearray')
+            raise TypeError("data must be instance of bytes or bytearray")
 
         if self.bytes_count + len(data) > SHA256_MAX:
-            raise ValueError('total bytes count beyond max allowed value')
+            raise ValueError("total bytes count beyond max allowed value")
 
         bufsize = self.bytes_count % 64
         assert len(self.buf) == bufsize
@@ -262,13 +263,13 @@ class CSHA256():
             data = data[remainder_len:]
             self.bytes_count += remainder_len
             self.Transform(buf, 1)
-            self.buf = b''
+            self.buf = b""
             bufsize = 0
 
         if len(data) >= 64:
             blocks = len(data) // 64
             self.Transform(data, blocks)
-            data = data[64 * blocks:]
+            data = data[64 * blocks :]
             self.bytes_count += 64 * blocks
 
         if len(data) > 0:
@@ -280,9 +281,9 @@ class CSHA256():
         return self
 
     def Finalize(self) -> bytes:
-        pad = b'\x80'+b'\x00'*63
+        pad = b"\x80" + b"\x00" * 63
         sizedesc = struct.pack(b">q", self.bytes_count << 3)
-        self.Write(pad[:1 + ((119 - (self.bytes_count % 64)) % 64)])
+        self.Write(pad[: 1 + ((119 - (self.bytes_count % 64)) % 64)])
         self.Write(sizedesc)
         return self.Midstate()
 
@@ -302,20 +303,22 @@ class CSHA256():
         hash_chunks.append(ToBE32(s[6]))
         hash_chunks.append(ToBE32(s[7]))
 
-        return b''.join(hash_chunks)
+        return b"".join(hash_chunks)
 
-    def Reset(self) -> 'CSHA256':
-        self.buf = b''  # type: bytes
+    def Reset(self) -> "CSHA256":
+        self.buf = b""  # type: bytes
         self.bytes_count = 0  # type: int
-        self.s = [0x6a09e667,
-                  0xbb67ae85,
-                  0x3c6ef372,
-                  0xa54ff53a,
-                  0x510e527f,
-                  0x9b05688c,
-                  0x1f83d9ab,
-                  0x5be0cd19]
+        self.s = [
+            0x6A09E667,
+            0xBB67AE85,
+            0x3C6EF372,
+            0xA54FF53A,
+            0x510E527F,
+            0x9B05688C,
+            0x1F83D9AB,
+            0x5BE0CD19,
+        ]
         return self
 
 
-__all__ = ('CSHA256',)
+__all__ = ("CSHA256",)

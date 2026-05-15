@@ -38,10 +38,10 @@ from time import time
 
 # bitcointx.select_chain_params('bitcoin/regtest')
 
-listen_on_host = '127.0.0.1'
+listen_on_host = "127.0.0.1"
 listen_on_port = 8080
-req_url_path = 'payment_request'
-ack_url_path = 'payment_ack'
+req_url_path = "payment_request"
+ack_url_path = "payment_ack"
 
 
 def payment_request() -> Tuple[bytes, Dict[str, str]]:
@@ -50,11 +50,11 @@ def payment_request() -> Tuple[bytes, Dict[str, str]]:
     bc = RPCCaller(allow_default_conf=True)
     btc = CCoinAddress(bc.getnewaddress())
 
-#   Setting the 'amount' field to 0 (zero) should prompt the user to enter
-#   the amount for us but a bug in bitcoin core qt version 0.9.1 (at time of
-#   writing) wrongly informs us that the value is too small and aborts.
-#   https://github.com/bitcoin/bitcoin/issues/3095
-#   Also there can be no leading 0's (zeros).
+    #   Setting the 'amount' field to 0 (zero) should prompt the user to enter
+    #   the amount for us but a bug in bitcoin core qt version 0.9.1 (at time of
+    #   writing) wrongly informs us that the value is too small and aborts.
+    #   https://github.com/bitcoin/bitcoin/issues/3095
+    #   Also there can be no leading 0's (zeros).
     btc_amount = 100000
     serialized_pubkey = btc.to_scriptPubKey()
 
@@ -62,44 +62,45 @@ def payment_request() -> Tuple[bytes, Dict[str, str]]:
     # pdo.network = 'test'
     pdo.outputs.add(amount=btc_amount, script=serialized_pubkey)
     pdo.time = int(time())
-    pdo.memo = 'String shown to user before confirming payment'
-    pdo.payment_url = 'http://{}:{}/{}'.format(listen_on_host,
-                                               listen_on_port,
-                                               ack_url_path)
+    pdo.memo = "String shown to user before confirming payment"
+    pdo.payment_url = "http://{}:{}/{}".format(listen_on_host, listen_on_port, ack_url_path)
 
     pro = o.PaymentRequest()
     pro.serialized_payment_details = pdo.SerializeToString()
 
     sds_pr = pro.SerializeToString()
 
-    headers = {'Content-Type': 'application/bitcoin-payment',
-               'Accept': 'application/bitcoin-paymentrequest'}
+    headers = {
+        "Content-Type": "application/bitcoin-payment",
+        "Accept": "application/bitcoin-paymentrequest",
+    }
 
     return sds_pr, headers
 
 
-def payment_ack(serialized_payment_message: bytes,
-                ) -> Tuple[bytes, Dict[str, str], CCoinAddress]:
+def payment_ack(
+    serialized_payment_message: bytes,
+) -> Tuple[bytes, Dict[str, str], CCoinAddress]:
     """Generates a PaymentACK object, captures client refund address
     and returns a tuple (message, refund_address)"""
 
     pao = o.PaymentACK()
     pao.payment.ParseFromString(serialized_payment_message)
-    pao.memo = 'String shown to user after payment confirmation'
+    pao.memo = "String shown to user after payment confirmation"
 
-    refund_address = CCoinAddress.from_scriptPubKey(
-        CScript(pao.payment.refund_to[0].script))
+    refund_address = CCoinAddress.from_scriptPubKey(CScript(pao.payment.refund_to[0].script))
 
     sds_pa = pao.SerializeToString()
 
-    headers = {'Content-Type': 'application/bitcoin-payment',
-               'Accept': 'application/bitcoin-paymentack'}
+    headers = {
+        "Content-Type": "application/bitcoin-payment",
+        "Accept": "application/bitcoin-paymentack",
+    }
 
     return sds_pa, headers, refund_address
 
 
 class ReqHandler(BaseHTTPRequestHandler):
-
     def _common_resp(self, data: bytes, headers: Dict[str, str]) -> None:
         self.send_response(200)
         for k, v in headers.items():
@@ -108,24 +109,24 @@ class ReqHandler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self) -> None:
-        if self.path == '/' + req_url_path:
+        if self.path == "/" + req_url_path:
             data, headers = payment_request()
             self._common_resp(data, headers)
         else:
-            self.send_error(404, 'wrong url')
+            self.send_error(404, "wrong url")
 
     def do_POST(self) -> None:
-        if self.path == '/' + ack_url_path:
-            assert isinstance(self.headers['Content-Length'], str)
-            content_length = int(self.headers['Content-Length'])
+        if self.path == "/" + ack_url_path:
+            assert isinstance(self.headers["Content-Length"], str)
+            content_length = int(self.headers["Content-Length"])
             payment_message = self.rfile.read(content_length)
             data, headers, refund_address = payment_ack(payment_message)
             print("Client's refund address: ", str(refund_address))
             self._common_resp(data, headers)
         else:
-            self.send_error(404, 'wrong url')
+            self.send_error(404, "wrong url")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     httpd = HTTPServer((listen_on_host, listen_on_port), ReqHandler)
     httpd.serve_forever()

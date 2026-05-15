@@ -20,13 +20,15 @@ import base64
 # pylama:ignore=E501
 
 
-def VerifyMessage(address: P2PKHCoinAddress, message: 'BitcoinMessage',
-                  sig: Union[str, bytes],
-                  validate_base64: bool = True
-                  ) -> bool:
+def VerifyMessage(
+    address: P2PKHCoinAddress,
+    message: "BitcoinMessage",
+    sig: Union[str, bytes],
+    validate_base64: bool = True,
+) -> bool:
 
     if isinstance(sig, bytes):
-        sig_b64 = sig.decode('ascii')
+        sig_b64 = sig.decode("ascii")
     else:
         sig_b64 = sig
 
@@ -41,7 +43,7 @@ def VerifyMessage(address: P2PKHCoinAddress, message: 'BitcoinMessage',
     return str(P2PKHCoinAddress.from_pubkey(pubkey)) == str(address)
 
 
-def SignMessage(key: CKeyBase, message: 'BitcoinMessage') -> bytes:
+def SignMessage(key: CKeyBase, message: "BitcoinMessage") -> bytes:
     sig, i = key.sign_compact(message.GetHash())
 
     meta = 27 + i
@@ -51,18 +53,20 @@ def SignMessage(key: CKeyBase, message: 'BitcoinMessage') -> bytes:
     return base64.b64encode(bytes([meta]) + sig)
 
 
-T_BitcoinMessage = TypeVar('T_BitcoinMessage', bound='BitcoinMessage')
+T_BitcoinMessage = TypeVar("T_BitcoinMessage", bound="BitcoinMessage")
 
 
 class BitcoinMessage(ImmutableSerializable):
-    __slots__ = ['magic', 'message']
+    __slots__ = ["magic", "message"]
 
     message: bytes
     magic: bytes
 
-    def __init__(self, message: Union[str, bytes] = "",
-                 magic: Union[str, bytes] = "Bitcoin Signed Message:\n"
-                 ) -> None:
+    def __init__(
+        self,
+        message: Union[str, bytes] = "",
+        magic: Union[str, bytes] = "Bitcoin Signed Message:\n",
+    ) -> None:
         if isinstance(message, str):
             message_bytes = message.encode("utf-8")
         else:
@@ -73,31 +77,26 @@ class BitcoinMessage(ImmutableSerializable):
         else:
             magic_bytes = magic
 
-        object.__setattr__(self, 'message', message_bytes)
-        object.__setattr__(self, 'magic', magic_bytes)
+        object.__setattr__(self, "message", message_bytes)
+        object.__setattr__(self, "magic", magic_bytes)
 
     @classmethod
-    def stream_deserialize(cls: Type[T_BitcoinMessage],
-                           f: ByteStream_Type,
-                           **kwargs: Any) -> T_BitcoinMessage:
-        magic = bitcointx.core.serialize.BytesSerializer.stream_deserialize(
-            f, **kwargs)
-        message = bitcointx.core.serialize.BytesSerializer.stream_deserialize(
-            f, **kwargs)
+    def stream_deserialize(
+        cls: Type[T_BitcoinMessage], f: ByteStream_Type, **kwargs: Any
+    ) -> T_BitcoinMessage:
+        magic = bitcointx.core.serialize.BytesSerializer.stream_deserialize(f, **kwargs)
+        message = bitcointx.core.serialize.BytesSerializer.stream_deserialize(f, **kwargs)
         return cls(message, magic)
 
     def stream_serialize(self, f: ByteStream_Type, **kwargs: Any) -> None:
-        bitcointx.core.serialize.BytesSerializer.stream_serialize(
-            self.magic, f, **kwargs)
-        bitcointx.core.serialize.BytesSerializer.stream_serialize(
-            self.message, f, **kwargs)
+        bitcointx.core.serialize.BytesSerializer.stream_serialize(self.magic, f, **kwargs)
+        bitcointx.core.serialize.BytesSerializer.stream_serialize(self.message, f, **kwargs)
 
     def __str__(self) -> str:
-        return self.message.decode('utf-8')
+        return self.message.decode("utf-8")
 
     def __repr__(self) -> str:
         try:
-            return (f'BitcoinMessage({self.magic.decode("utf-8")}, '
-                    f'{self.message.decode("utf-8")})')
+            return f"BitcoinMessage({self.magic.decode('utf-8')}, {self.message.decode('utf-8')})"
         except UnicodeDecodeError:
-            return f'BitcoinMessage({self.magic!r}, {self.message!r})'
+            return f"BitcoinMessage({self.magic!r}, {self.message!r})"

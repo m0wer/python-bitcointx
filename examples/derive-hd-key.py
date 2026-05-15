@@ -20,16 +20,16 @@ from bitcointx.base58 import Base58Error, UnexpectedBase58PrefixError
 from bitcointx.wallet import CCoinExtKey, CCoinExtPubKey
 from typing import Union
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     xkey: Union[CCoinExtKey, CCoinExtPubKey]
 
-    if len(sys.argv) >= 2 and sys.argv[1] in ('-t', '-r'):
-        if sys.argv[1] == '-t':
-            select_chain_params('bitcoin/testnet')
-        elif sys.argv[1] == '-r':
-            select_chain_params('bitcoin/regtest')
+    if len(sys.argv) >= 2 and sys.argv[1] in ("-t", "-r"):
+        if sys.argv[1] == "-t":
+            select_chain_params("bitcoin/testnet")
+        elif sys.argv[1] == "-r":
+            select_chain_params("bitcoin/regtest")
         else:
-            assert (0)
+            assert 0
 
         sys.argv.pop(1)
 
@@ -40,7 +40,6 @@ if __name__ == '__main__':
         key_classes = (CCoinExtKey, CCoinExtPubKey)
         for i, cls in enumerate(key_classes):
             try:
-
                 # mypy seems to have problems with tracking the types when
                 # iterating over a list of classes.
                 # These two lines are essentially the same,
@@ -62,8 +61,7 @@ if __name__ == '__main__':
             print("ERROR: specified key does not appear to be valid")
             sys.exit(-1)
     else:
-        print("usage: {} [-r|-t] <derivation_path> [xpriv_or_xpub]"
-              .format(sys.argv[0]))
+        print("usage: {} [-r|-t] <derivation_path> [xpriv_or_xpub]".format(sys.argv[0]))
         sys.exit(-1)
 
     path_str = sys.argv[1]
@@ -74,7 +72,7 @@ if __name__ == '__main__':
         # NOTE: xkey.derive_path() method will raise ValueError
         # on empty path, to guard against bugs:
         #   if there is nothing to derive, why call derive_path() ?
-        print('ERROR: nothing to derive, path is empty.')
+        print("ERROR: nothing to derive, path is empty.")
         sys.exit(-1)
 
     for n in path:

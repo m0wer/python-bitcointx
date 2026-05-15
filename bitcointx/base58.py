@@ -20,10 +20,10 @@ import bitcointx.core
 
 from typing import TypeVar, Type, List
 
-B58_DIGITS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+B58_DIGITS = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
 
-T_CBase58Data = TypeVar('T_CBase58Data', bound='CBase58Data')
+T_CBase58Data = TypeVar("T_CBase58Data", bound="CBase58Data")
 
 
 class Base58Error(bitcointx.core.AddressDataEncodingError):
@@ -31,9 +31,8 @@ class Base58Error(bitcointx.core.AddressDataEncodingError):
 
 
 class UnexpectedBase58PrefixError(Base58Error):
-    """Raised by base58_from_bytes_match_prefix() when unexpected prefix encountered
+    """Raised by base58_from_bytes_match_prefix() when unexpected prefix encountered"""
 
-    """
     pass
 
 
@@ -42,6 +41,7 @@ class InvalidBase58Error(Base58Error):
 
     Checksum failures raise Base58ChecksumError specifically.
     """
+
     pass
 
 
@@ -49,14 +49,14 @@ def encode(b: bytes) -> str:
     """Encode bytes to a base58-encoded string"""
 
     # Convert big-endian bytes to integer
-    n = int('0x0' + binascii.hexlify(b).decode('utf8'), 16)
+    n = int("0x0" + binascii.hexlify(b).decode("utf8"), 16)
 
     # Divide that integer into bas58
     res = []
     while n > 0:
         n, r = divmod(n, 58)
         res.append(B58_DIGITS[r])
-    res_str = ''.join(res[::-1])
+    res_str = "".join(res[::-1])
 
     # Encode leading zeros as base58 zeros
     czero = 0
@@ -72,22 +72,22 @@ def encode(b: bytes) -> str:
 def decode(s: str) -> bytes:
     """Decode a base58-encoding string, returning bytes"""
     if not s:
-        return b''
+        return b""
 
     # Convert the string to an integer
     n = 0
     for c in s:
         n *= 58
         if c not in B58_DIGITS:
-            raise InvalidBase58Error('Character %r is not a valid base58 character' % c)
+            raise InvalidBase58Error("Character %r is not a valid base58 character" % c)
         digit = B58_DIGITS.index(c)
         n += digit
 
     # Convert the integer to bytes
-    h = '%x' % n
+    h = "%x" % n
     if len(h) % 2:
-        h = '0' + h
-    res = binascii.unhexlify(h.encode('utf8'))
+        h = "0" + h
+    res = binascii.unhexlify(h.encode("utf8"))
 
     # Add padding back.
     pad = 0
@@ -96,11 +96,12 @@ def decode(s: str) -> bytes:
             pad += 1
         else:
             break
-    return b'\x00' * pad + res
+    return b"\x00" * pad + res
 
 
 class Base58ChecksumError(Base58Error):
     """Raised on Base58 checksum errors"""
+
     pass
 
 
@@ -112,17 +113,19 @@ class CBase58Data(bytes):
     prefix is empty by default.
     """
 
-    base58_prefix = b''
+    base58_prefix = b""
     _data_length: int
 
     def __new__(cls: Type[T_CBase58Data], s: str) -> T_CBase58Data:
         k = decode(s)
         if len(k) < 4:
-            raise Base58Error('data too short')
+            raise Base58Error("data too short")
         data, check0 = k[0:-4], k[-4:]
         check1 = bitcointx.core.Hash(data)[:4]
         if check0 != check1:
-            raise Base58ChecksumError('Checksum mismatch: expected %r, calculated %r' % (check0, check1))
+            raise Base58ChecksumError(
+                "Checksum mismatch: expected %r, calculated %r" % (check0, check1)
+            )
         return cls.base58_from_bytes_match_prefix(data)
 
     def __init__(self, s: str) -> None:
@@ -139,15 +142,13 @@ class CBase58Data(bytes):
         return encode(self.base58_prefix + self + check)
 
     @classmethod
-    def base58_get_match_candidates(cls: Type[T_CBase58Data]
-                                    ) -> List[Type[T_CBase58Data]]:
+    def base58_get_match_candidates(cls: Type[T_CBase58Data]) -> List[Type[T_CBase58Data]]:
         if cls.base58_prefix:
             return [cls]
         return []
 
     @classmethod
-    def base58_from_bytes_match_prefix(cls: Type[T_CBase58Data], data: bytes
-                                       ) -> T_CBase58Data:
+    def base58_from_bytes_match_prefix(cls: Type[T_CBase58Data], data: bytes) -> T_CBase58Data:
         """Instantiate from data with prefix.
         if prefix is empty, this is equivalent of from_bytes()"""
         candidates = cls.base58_get_match_candidates()
@@ -162,17 +163,20 @@ class CBase58Data(bytes):
                 except UnexpectedBase58PrefixError:
                     pass
             elif data.startswith(pfx):
-                return candidate.from_bytes(data[len(pfx):])
+                return candidate.from_bytes(data[len(pfx) :])
 
         if len(candidates) == 1:
             raise UnexpectedBase58PrefixError(
-                'Incorrect prefix bytes for {}: {}, expected {}'
-                .format(cls.__name__,
-                        bitcointx.core.b2x(data[:len(pfx)]),
-                        bitcointx.core.b2x(cls.base58_prefix)))
+                "Incorrect prefix bytes for {}: {}, expected {}".format(
+                    cls.__name__,
+                    bitcointx.core.b2x(data[: len(pfx)]),
+                    bitcointx.core.b2x(cls.base58_prefix),
+                )
+            )
 
         raise UnexpectedBase58PrefixError(
-            'base58 prefix does not match any known base58 address class')
+            "base58 prefix does not match any known base58 address class"
+        )
 
     @classmethod
     def from_bytes(cls: Type[T_CBase58Data], data: bytes) -> T_CBase58Data:
@@ -187,18 +191,18 @@ class CBase58Data(bytes):
         Note that it's the data represented that is converted;
         the prefix is not included.
         """
-        return b'' + self
+        return b"" + self
 
     def __repr__(self) -> str:
-        return '%s(%r)' % (self.__class__.__name__, str(self))
+        return "%s(%r)" % (self.__class__.__name__, str(self))
 
 
 __all__ = (
-    'B58_DIGITS',
-    'Base58Error',
-    'InvalidBase58Error',
-    'encode',
-    'decode',
-    'Base58ChecksumError',
-    'CBase58Data',
+    "B58_DIGITS",
+    "Base58Error",
+    "InvalidBase58Error",
+    "encode",
+    "decode",
+    "Base58ChecksumError",
+    "CBase58Data",
 )

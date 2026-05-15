@@ -29,28 +29,28 @@ class Test_RPC(unittest.TestCase):
     # NOTE: if we add MockRPCCaller to create mocked RPC interface,
     # then maybe we can add tests that will make sense.
     # For now, just test that we can create the instance.
-    RPCCaller(service_url='http://user:pass@host')
+    RPCCaller(service_url="http://user:pass@host")
 
     def test_split_hostport(self) -> None:
         def T(hostport: str, expected_pair: Tuple[str, Optional[int]]) -> None:
             (host, port) = split_hostport(hostport)
             self.assertEqual((host, port), expected_pair)
 
-        T('localhost', ('localhost', None))
-        T('localhost:123', ('localhost', 123))
-        T('localhost:0', ('localhost:0', None))
-        T('localhost:88888', ('localhost:88888', None))
-        T('lo.cal.host:123', ('lo.cal.host', 123))
-        T('lo.cal.host:123_', ('lo.cal.host:123_', None))
-        T('lo:cal:host:123', ('lo:cal:host:123', None))
-        T('local:host:123', ('local:host:123', None))
-        T('[1a:2b:3c]:491', ('[1a:2b:3c]', 491))
+        T("localhost", ("localhost", None))
+        T("localhost:123", ("localhost", 123))
+        T("localhost:0", ("localhost:0", None))
+        T("localhost:88888", ("localhost:88888", None))
+        T("lo.cal.host:123", ("lo.cal.host", 123))
+        T("lo.cal.host:123_", ("lo.cal.host:123_", None))
+        T("lo:cal:host:123", ("lo:cal:host:123", None))
+        T("local:host:123", ("local:host:123", None))
+        T("[1a:2b:3c]:491", ("[1a:2b:3c]", 491))
         # split_hostport doesn't care what's in square brackets
-        T('[local:host]:491', ('[local:host]', 491))
-        T('[local:host]:491934', ('[local:host]:491934', None))
-        T('.[local:host]:491', ('.[local:host]:491', None))
-        T('[local:host].:491', ('[local:host].:491', None))
-        T('[local:host]:p491', ('[local:host]:p491', None))
+        T("[local:host]:491", ("[local:host]", 491))
+        T("[local:host]:491934", ("[local:host]:491934", None))
+        T(".[local:host]:491", (".[local:host]:491", None))
+        T("[local:host].:491", ("[local:host].:491", None))
+        T("[local:host]:p491", ("[local:host]:p491", None))
 
     def test_parse_config(self) -> None:
         conf_file_contents = """
@@ -80,29 +80,25 @@ class Test_RPC(unittest.TestCase):
             """
 
         rpc = RPCCaller(conf_file_contents=conf_file_contents)
-        self.assertEqual(rpc._RPCCaller__service_url, 'http://127.0.0.10:8888')
+        self.assertEqual(rpc._RPCCaller__service_url, "http://127.0.0.10:8888")
         authpair = "someuser1:somepass1"
-        authhdr = "Basic " + base64.b64encode(authpair.encode('utf8')
-                                              ).decode('utf8')
+        authhdr = "Basic " + base64.b64encode(authpair.encode("utf8")).decode("utf8")
         self.assertEqual(rpc._RPCCaller__auth_header, authhdr)
 
-        with ChainParams('bitcoin/testnet'):
+        with ChainParams("bitcoin/testnet"):
             rpc = RPCCaller(conf_file_contents=conf_file_contents)
-            self.assertEqual(rpc._RPCCaller__service_url,
-                             'http://127.0.0.11:9999')
+            self.assertEqual(rpc._RPCCaller__service_url, "http://127.0.0.11:9999")
             authpair = ":somepass2"  # no user specified
-            authhdr = "Basic " + base64.b64encode(authpair.encode('utf8')
-                                                  ).decode('utf8')
+            authhdr = "Basic " + base64.b64encode(authpair.encode("utf8")).decode("utf8")
             self.assertEqual(rpc._RPCCaller__auth_header, authhdr)
 
-        with ChainParams('bitcoin/regtest'):
+        with ChainParams("bitcoin/regtest"):
             rpc = RPCCaller(conf_file_contents=conf_file_contents)
-            self.assertEqual(rpc._RPCCaller__service_url,
-                             'http://127.0.0.12:8123')
+            self.assertEqual(rpc._RPCCaller__service_url, "http://127.0.0.12:8123")
             authpair = "someuser3:somepass3"
-            authhdr = "Basic " + base64.b64encode(authpair.encode('utf8')
-                                                  ).decode('utf8')
+            authhdr = "Basic " + base64.b64encode(authpair.encode("utf8")).decode("utf8")
             self.assertEqual(rpc._RPCCaller__auth_header, authhdr)
+
 
 #    def test_can_validate(self):
 #        working_address = '1CB2fxLGAZEzgaY4pjr4ndeDWJiz3D3AT7'

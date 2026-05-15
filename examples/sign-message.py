@@ -27,59 +27,56 @@ def sign_message(key: str, msg: str) -> bytes:
     return SignMessage(secret, message)
 
 
-def print_default(signature: bytes,
-                  key: Optional[str] = None,
-                  msg: Optional[str] = None) -> None:
-    print(signature.decode('ascii'))
+def print_default(signature: bytes, key: Optional[str] = None, msg: Optional[str] = None) -> None:
+    print(signature.decode("ascii"))
 
 
 def print_verbose(signature: bytes, key: str, msg: str) -> None:
     secret = CCoinKey(key)
     address = P2PKHCoinAddress.from_pubkey(secret.pub)
     message = BitcoinMessage(msg)
-    print('Address: %s' % str(address))
-    print('Message: %s' % msg)
-    print('Signature: %s' % signature.decode('ascii'))
-    print('Verified: %s' % VerifyMessage(address, message, signature))
-    print('\nTo verify using bitcoin core:')
-    print('\n`bitcoin-cli verifymessage %s \'%s\' \'%s\'`\n'
-          % (str(address), signature.decode('ascii'), msg))
+    print("Address: %s" % str(address))
+    print("Message: %s" % msg)
+    print("Signature: %s" % signature.decode("ascii"))
+    print("Verified: %s" % VerifyMessage(address, message, signature))
+    print("\nTo verify using bitcoin core:")
+    print(
+        "\n`bitcoin-cli verifymessage %s '%s' '%s'`\n"
+        % (str(address), signature.decode("ascii"), msg)
+    )
 
 
-def parser() -> 'argparse.ArgumentParser':
+def parser() -> "argparse.ArgumentParser":
     parser = argparse.ArgumentParser(
-        description='Sign a message with a private key.',
-        epilog=('Security warning: arguments may be visible to other users '
-                'on the same host.'))
+        description="Sign a message with a private key.",
+        epilog=("Security warning: arguments may be visible to other users on the same host."),
+    )
     parser.add_argument(
-        '-v', '--verbose', dest='print_result',
-        action='store_const', const=print_verbose, default=print_default,
-        help='verbose output')
-    parser.add_argument(
-        '-k', '--key',
-        required=True,
-        help='private key in base58 encoding')
-    parser.add_argument(
-        '-m', '--msg',
-        required=True,
-        help='message to sign')
-    parser.add_argument('-t', '--testnet', action='store_true',
-                        dest='testnet', help='Use testnet')
-    parser.add_argument('-r', '--regtest', action='store_true',
-                        dest='regtest', help='Use regtest')
+        "-v",
+        "--verbose",
+        dest="print_result",
+        action="store_const",
+        const=print_verbose,
+        default=print_default,
+        help="verbose output",
+    )
+    parser.add_argument("-k", "--key", required=True, help="private key in base58 encoding")
+    parser.add_argument("-m", "--msg", required=True, help="message to sign")
+    parser.add_argument("-t", "--testnet", action="store_true", dest="testnet", help="Use testnet")
+    parser.add_argument("-r", "--regtest", action="store_true", dest="regtest", help="Use regtest")
     return parser
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parser().parse_args()
     if args.testnet:
-        select_chain_params('bitcoin/testnet')
+        select_chain_params("bitcoin/testnet")
     elif args.regtest:
-        select_chain_params('bitcoin/regtest')
+        select_chain_params("bitcoin/regtest")
     try:
         signature = sign_message(args.key, args.msg)
     except Exception as error:
-        print('%s: %s' % (error.__class__.__name__, str(error)))
+        print("%s: %s" % (error.__class__.__name__, str(error)))
         exit(1)
     else:
         args.print_result(signature, args.key, args.msg)

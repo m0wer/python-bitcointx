@@ -19,6 +19,7 @@ from typing import Optional
 
 # generic big endian MPI format
 
+
 def bn_bytes(v: int, have_ext: bool = False) -> int:
     ext = 0
     if have_ext:
@@ -30,7 +31,7 @@ def bn2bin(v: int) -> bytearray:
     s = bytearray()
     i = bn_bytes(v)
     while i > 0:
-        s.append((v >> ((i - 1) * 8)) & 0xff)
+        s.append((v >> ((i - 1) * 8)) & 0xFF)
         i -= 1
     return s
 
@@ -92,8 +93,8 @@ def mpi2bn(s: bytes) -> Optional[int]:
 
 # bitcoin-specific little endian format, with implicit size
 def mpi2vch(s: bytes) -> bytes:
-    r = s[4:]           # strip size
-    r = r[::-1]         # reverse string, converting BE->LE
+    r = s[4:]  # strip size
+    r = r[::-1]  # reverse string, converting BE->LE
     return r
 
 
@@ -102,8 +103,8 @@ def bn2vch(v: int) -> bytes:
 
 
 def vch2mpi(s: bytes) -> bytes:
-    r = struct.pack(b">I", len(s))   # size
-    r += s[::-1]            # reverse string, converting LE->BE
+    r = struct.pack(b">I", len(s))  # size
+    r += s[::-1]  # reverse string, converting LE->BE
     return r
 
 

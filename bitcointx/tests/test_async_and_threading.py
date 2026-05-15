@@ -35,15 +35,14 @@ from bitcointx.wallet import (
 
 
 class Test_Threading(unittest.TestCase):
-
     def test_addresses(self) -> None:
-        pub = CPubKey(x('0378d430274f8c5ec1321338151e9f27f4c676a008bdf8638d07c0b6be9ab35c71'))
+        pub = CPubKey(x("0378d430274f8c5ec1321338151e9f27f4c676a008bdf8638d07c0b6be9ab35c71"))
 
         events: Dict[str, Union[threading.Event, asyncio.Event]]
         events = {
-            'mainnet': threading.Event(),
-            'testnet': threading.Event(),
-            'regtest': threading.Event(),
+            "mainnet": threading.Event(),
+            "testnet": threading.Event(),
+            "regtest": threading.Event(),
         }
 
         # list append is thread-safe, can use just the list.
@@ -74,91 +73,88 @@ class Test_Threading(unittest.TestCase):
 
             # check secp256k1 error handling (which uses thread-local storage)
             secp256k1.lib.secp256k1_ec_pubkey_tweak_add(
-                secp256k1.ctx.verify,
-                ctypes.c_char_p(0), ctypes.c_char_p(0))
+                secp256k1.ctx.verify, ctypes.c_char_p(0), ctypes.c_char_p(0)
+            )
             err = secp256k1_get_last_error()
-            assert err['code'] == -2
-            assert err['type'] == 'illegal_argument'
-            assert 'message' in err
+            assert err["code"] == -2
+            assert err["type"] == "illegal_argument"
+            assert "message" in err
 
         def mainnet() -> None:
-            select_chain_params('bitcoin/mainnet')
-            wait('testnet')
+            select_chain_params("bitcoin/mainnet")
+            wait("testnet")
             a = P2PKHCoinAddress.from_pubkey(pub)
             assert CBase58Data(str(a))[0] == 0
             check_core_modules()
-            ready('mainnet')
-            finish('mainnet')
-            self.assertEqual(get_current_chain_params().NAME, 'bitcoin')
+            ready("mainnet")
+            finish("mainnet")
+            self.assertEqual(get_current_chain_params().NAME, "bitcoin")
 
         async def async_mainnet() -> None:
-            select_chain_params('bitcoin/mainnet')
-            await wait_async('testnet')
+            select_chain_params("bitcoin/mainnet")
+            await wait_async("testnet")
             a = P2PKHCoinAddress.from_pubkey(pub)
             assert CBase58Data(str(a))[0] == 0
             check_core_modules()
-            ready('mainnet')
-            finish('mainnet')
-            self.assertEqual(get_current_chain_params().NAME, 'bitcoin')
+            ready("mainnet")
+            finish("mainnet")
+            self.assertEqual(get_current_chain_params().NAME, "bitcoin")
 
         def testnet() -> None:
-            select_chain_params('bitcoin/testnet')
-            wait('regtest')
-            a = P2SHCoinAddress.from_redeemScript(
-                CScript(b'\xa9' + Hash160(pub) + b'\x87'))
+            select_chain_params("bitcoin/testnet")
+            wait("regtest")
+            a = P2SHCoinAddress.from_redeemScript(CScript(b"\xa9" + Hash160(pub) + b"\x87"))
             assert CBase58Data(str(a))[0] == 196
             check_core_modules()
-            ready('testnet')
-            wait('mainnet')
-            self.assertEqual(get_current_chain_params().NAME,
-                             'bitcoin/testnet')
-            finish('testnet')
+            ready("testnet")
+            wait("mainnet")
+            self.assertEqual(get_current_chain_params().NAME, "bitcoin/testnet")
+            finish("testnet")
 
         async def async_testnet() -> None:
-            select_chain_params('bitcoin/testnet')
-            await wait_async('regtest')
-            a = P2SHCoinAddress.from_redeemScript(
-                CScript(b'\xa9' + Hash160(pub) + b'\x87'))
+            select_chain_params("bitcoin/testnet")
+            await wait_async("regtest")
+            a = P2SHCoinAddress.from_redeemScript(CScript(b"\xa9" + Hash160(pub) + b"\x87"))
             assert CBase58Data(str(a))[0] == 196
             check_core_modules()
-            ready('testnet')
-            await wait_async('mainnet')
-            self.assertEqual(get_current_chain_params().NAME,
-                             'bitcoin/testnet')
-            finish('testnet')
+            ready("testnet")
+            await wait_async("mainnet")
+            self.assertEqual(get_current_chain_params().NAME, "bitcoin/testnet")
+            finish("testnet")
 
         def regtest() -> None:
-            select_chain_params('bitcoin/regtest')
+            select_chain_params("bitcoin/regtest")
             a = P2WPKHCoinAddress.from_pubkey(pub)
             witver, data = bitcointx.segwit_addr.decode(
-                P2WPKHBitcoinRegtestAddress.bech32_hrp, str(a))
+                P2WPKHBitcoinRegtestAddress.bech32_hrp, str(a)
+            )
             assert witver == 0
             assert data == Hash160(pub)
             check_core_modules()
-            ready('regtest')
-            wait('testnet')
-            wait('mainnet')
-            self.assertEqual(get_current_chain_params().NAME,
-                             'bitcoin/regtest')
-            finish('regtest')
+            ready("regtest")
+            wait("testnet")
+            wait("mainnet")
+            self.assertEqual(get_current_chain_params().NAME, "bitcoin/regtest")
+            finish("regtest")
 
         async def async_regtest() -> None:
-            select_chain_params('bitcoin/regtest')
+            select_chain_params("bitcoin/regtest")
             a = P2WPKHCoinAddress.from_pubkey(pub)
             witver, data = bitcointx.segwit_addr.decode(
-                P2WPKHBitcoinRegtestAddress.bech32_hrp, str(a))
+                P2WPKHBitcoinRegtestAddress.bech32_hrp, str(a)
+            )
             assert witver == 0
             assert data == Hash160(pub)
             check_core_modules()
-            ready('regtest')
-            await wait_async('testnet')
-            await wait_async('mainnet')
-            self.assertEqual(get_current_chain_params().NAME,
-                             'bitcoin/regtest')
-            finish('regtest')
+            ready("regtest")
+            await wait_async("testnet")
+            await wait_async("mainnet")
+            self.assertEqual(get_current_chain_params().NAME, "bitcoin/regtest")
+            finish("regtest")
 
-        assert isinstance(get_current_chain_params(), BitcoinMainnetParams), \
+        assert isinstance(get_current_chain_params(), BitcoinMainnetParams), (
             "tests assume bitcoin params in effect by default"
+        )
 
         mainnet_thread = threading.Thread(target=mainnet)
         testnet_thread = threading.Thread(target=testnet)
@@ -170,25 +166,24 @@ class Test_Threading(unittest.TestCase):
         testnet_thread.join()
         regtest_thread.join()
 
-        self.assertEqual(set(finished_successfully),
-                         set(['mainnet', 'testnet', 'regtest']))
-        self.assertIsInstance(get_current_chain_params(),
-                              BitcoinMainnetParams)
+        self.assertEqual(set(finished_successfully), set(["mainnet", "testnet", "regtest"]))
+        self.assertIsInstance(get_current_chain_params(), BitcoinMainnetParams)
 
         if issubclass(ContextVarsCompat, threading.local):
             warnings.warn(
-                'contextvars.ContextVar is unavailable, asyncio contexts '
-                'when switching chain params will be broken. '
-                'Use python >= 3.7 if you want asyncio compatibility, or '
-                'just don\'set chainparams in concurrent code.')
+                "contextvars.ContextVar is unavailable, asyncio contexts "
+                "when switching chain params will be broken. "
+                "Use python >= 3.7 if you want asyncio compatibility, or "
+                "just don'set chainparams in concurrent code."
+            )
             return
 
         finished_successfully = []
 
         events = {
-            'mainnet': asyncio.Event(),
-            'testnet': asyncio.Event(),
-            'regtest': asyncio.Event(),
+            "mainnet": asyncio.Event(),
+            "testnet": asyncio.Event(),
+            "regtest": asyncio.Event(),
         }
 
         async def go() -> None:
@@ -199,7 +194,5 @@ class Test_Threading(unittest.TestCase):
 
         asyncio.run(go())
 
-        self.assertEqual(set(finished_successfully),
-                         set(['mainnet', 'testnet', 'regtest']))
-        self.assertIsInstance(get_current_chain_params(),
-                              BitcoinMainnetParams)
+        self.assertEqual(set(finished_successfully), set(["mainnet", "testnet", "regtest"]))
+        self.assertIsInstance(get_current_chain_params(), BitcoinMainnetParams)

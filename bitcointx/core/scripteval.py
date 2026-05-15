@@ -20,9 +20,7 @@ module.
 """
 
 import hashlib
-from typing import (
-    Iterable, Optional, List, Tuple, Set, Type, TypeVar, Union, Callable
-)
+from typing import Iterable, Optional, List, Tuple, Set, Type, TypeVar, Union, Callable
 
 import bitcointx.core
 import bitcointx.core._bignum
@@ -33,36 +31,97 @@ import bitcointx.core._ripemd160
 from bitcointx.util import ensure_isinstance
 
 from bitcointx.core.script import (
-    CScript, OPCODE_NAMES,
-    SIGVERSION_BASE, SIGVERSION_WITNESS_V0,
-    SIGHASH_ALL, SIGHASH_SINGLE, SIGHASH_ANYONECANPAY,
-    MAX_SCRIPT_ELEMENT_SIZE, MAX_SCRIPT_OPCODES, MAX_SCRIPT_SIZE,
-    IsLowDERSignature, FindAndDelete, DISABLED_OPCODES,
-    CScriptInvalidError, CScriptWitness, SIGVERSION_Type, CScriptOp,
-
-    OP_CHECKMULTISIGVERIFY, OP_CHECKMULTISIG, OP_CHECKSIG, OP_CHECKSIGVERIFY,
-    OP_1ADD, OP_1SUB, OP_1NEGATE, OP_NEGATE, OP_ABS, OP_ADD, OP_SUB,
-    OP_BOOLAND, OP_BOOLOR, OP_NOT, OP_0NOTEQUAL, OP_EQUAL, OP_EQUALVERIFY,
-    OP_NUMEQUAL, OP_NUMEQUALVERIFY, OP_LESSTHAN, OP_LESSTHANOREQUAL,
-    OP_NUMNOTEQUAL, OP_GREATERTHAN, OP_GREATERTHANOREQUAL,
-    OP_MIN, OP_MAX, OP_PUSHDATA4,
-    OP_1, OP_16,
-    OP_IF, OP_ENDIF, OP_ELSE, OP_DROP, OP_DUP, OP_2DROP, OP_2DUP, OP_2OVER,
-    OP_2ROT, OP_2SWAP, OP_3DUP, OP_CODESEPARATOR, OP_DEPTH,
-    OP_FROMALTSTACK, OP_HASH160, OP_HASH256, OP_NOTIF, OP_IFDUP, OP_NIP,
-    OP_NOP, OP_NOP1, OP_NOP10, OP_OVER, OP_PICK, OP_ROLL, OP_RETURN,
-    OP_RIPEMD160, OP_ROT, OP_SIZE, OP_SHA1, OP_SHA256, OP_SWAP, OP_TOALTSTACK,
-    OP_TUCK, OP_VERIFY, OP_WITHIN,
+    CScript,
+    OPCODE_NAMES,
+    SIGVERSION_BASE,
+    SIGVERSION_WITNESS_V0,
+    SIGHASH_ALL,
+    SIGHASH_SINGLE,
+    SIGHASH_ANYONECANPAY,
+    MAX_SCRIPT_ELEMENT_SIZE,
+    MAX_SCRIPT_OPCODES,
+    MAX_SCRIPT_SIZE,
+    IsLowDERSignature,
+    FindAndDelete,
+    DISABLED_OPCODES,
+    CScriptInvalidError,
+    CScriptWitness,
+    SIGVERSION_Type,
+    CScriptOp,
+    OP_CHECKMULTISIGVERIFY,
+    OP_CHECKMULTISIG,
+    OP_CHECKSIG,
+    OP_CHECKSIGVERIFY,
+    OP_1ADD,
+    OP_1SUB,
+    OP_1NEGATE,
+    OP_NEGATE,
+    OP_ABS,
+    OP_ADD,
+    OP_SUB,
+    OP_BOOLAND,
+    OP_BOOLOR,
+    OP_NOT,
+    OP_0NOTEQUAL,
+    OP_EQUAL,
+    OP_EQUALVERIFY,
+    OP_NUMEQUAL,
+    OP_NUMEQUALVERIFY,
+    OP_LESSTHAN,
+    OP_LESSTHANOREQUAL,
+    OP_NUMNOTEQUAL,
+    OP_GREATERTHAN,
+    OP_GREATERTHANOREQUAL,
+    OP_MIN,
+    OP_MAX,
+    OP_PUSHDATA4,
+    OP_1,
+    OP_16,
+    OP_IF,
+    OP_ENDIF,
+    OP_ELSE,
+    OP_DROP,
+    OP_DUP,
+    OP_2DROP,
+    OP_2DUP,
+    OP_2OVER,
+    OP_2ROT,
+    OP_2SWAP,
+    OP_3DUP,
+    OP_CODESEPARATOR,
+    OP_DEPTH,
+    OP_FROMALTSTACK,
+    OP_HASH160,
+    OP_HASH256,
+    OP_NOTIF,
+    OP_IFDUP,
+    OP_NIP,
+    OP_NOP,
+    OP_NOP1,
+    OP_NOP10,
+    OP_OVER,
+    OP_PICK,
+    OP_ROLL,
+    OP_RETURN,
+    OP_RIPEMD160,
+    OP_ROT,
+    OP_SIZE,
+    OP_SHA1,
+    OP_SHA256,
+    OP_SWAP,
+    OP_TOALTSTACK,
+    OP_TUCK,
+    OP_VERIFY,
+    OP_WITHIN,
 )
 
-T_EvalScriptError = TypeVar('T_EvalScriptError', bound='EvalScriptError')
+T_EvalScriptError = TypeVar("T_EvalScriptError", bound="EvalScriptError")
 
 MAX_NUM_SIZE = 4
 MAX_STACK_ITEMS = 1000
 
 
-class ScriptVerifyFlag_Type:
-    ...
+class ScriptVerifyFlag_Type: ...
 
 
 SCRIPT_VERIFY_P2SH = ScriptVerifyFlag_Type()
@@ -86,13 +145,15 @@ SCRIPT_VERIFY_TAPROOT = ScriptVerifyFlag_Type()
 
 _STRICT_ENCODING_FLAGS = set((SCRIPT_VERIFY_DERSIG, SCRIPT_VERIFY_LOW_S, SCRIPT_VERIFY_STRICTENC))
 
-UNHANDLED_SCRIPT_VERIFY_FLAGS = set((
-    SCRIPT_VERIFY_SIGPUSHONLY,
-    SCRIPT_VERIFY_MINIMALDATA,
-    SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
-    SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
-    SCRIPT_VERIFY_CONST_SCRIPTCODE,
-))
+UNHANDLED_SCRIPT_VERIFY_FLAGS = set(
+    (
+        SCRIPT_VERIFY_SIGPUSHONLY,
+        SCRIPT_VERIFY_MINIMALDATA,
+        SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
+        SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
+        SCRIPT_VERIFY_CONST_SCRIPTCODE,
+    )
+)
 
 MANDATORY_SCRIPT_VERIFY_FLAGS = {SCRIPT_VERIFY_P2SH}
 
@@ -112,32 +173,30 @@ STANDARD_SCRIPT_VERIFY_FLAGS = MANDATORY_SCRIPT_VERIFY_FLAGS | {
     SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM,
     SCRIPT_VERIFY_WITNESS_PUBKEYTYPE,
     SCRIPT_VERIFY_CONST_SCRIPTCODE,
-    SCRIPT_VERIFY_TAPROOT
+    SCRIPT_VERIFY_TAPROOT,
 }
 
-ALL_SCRIPT_VERIFY_FLAGS = STANDARD_SCRIPT_VERIFY_FLAGS | {
-    SCRIPT_VERIFY_SIGPUSHONLY
-}
+ALL_SCRIPT_VERIFY_FLAGS = STANDARD_SCRIPT_VERIFY_FLAGS | {SCRIPT_VERIFY_SIGPUSHONLY}
 
 
 SCRIPT_VERIFY_FLAGS_BY_NAME = {
-    'P2SH': SCRIPT_VERIFY_P2SH,
-    'STRICTENC': SCRIPT_VERIFY_STRICTENC,
-    'DERSIG': SCRIPT_VERIFY_DERSIG,
-    'LOW_S': SCRIPT_VERIFY_LOW_S,
-    'NULLDUMMY': SCRIPT_VERIFY_NULLDUMMY,
-    'SIGPUSHONLY': SCRIPT_VERIFY_SIGPUSHONLY,
-    'MINIMALDATA': SCRIPT_VERIFY_MINIMALDATA,
-    'DISCOURAGE_UPGRADABLE_NOPS': SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS,
-    'CLEANSTACK': SCRIPT_VERIFY_CLEANSTACK,
-    'CHECKLOCKTIMEVERIFY': SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
-    'CHECKSEQUENCEVERIFY': SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
-    'MINIMALIF': SCRIPT_VERIFY_MINIMALIF,
-    'NULLFAIL': SCRIPT_VERIFY_NULLFAIL,
-    'WITNESS': SCRIPT_VERIFY_WITNESS,
-    'DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM': SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM,
-    'WITNESS_PUBKEYTYPE': SCRIPT_VERIFY_WITNESS_PUBKEYTYPE,
-    'CONST_SCRIPTCODE': SCRIPT_VERIFY_CONST_SCRIPTCODE,
+    "P2SH": SCRIPT_VERIFY_P2SH,
+    "STRICTENC": SCRIPT_VERIFY_STRICTENC,
+    "DERSIG": SCRIPT_VERIFY_DERSIG,
+    "LOW_S": SCRIPT_VERIFY_LOW_S,
+    "NULLDUMMY": SCRIPT_VERIFY_NULLDUMMY,
+    "SIGPUSHONLY": SCRIPT_VERIFY_SIGPUSHONLY,
+    "MINIMALDATA": SCRIPT_VERIFY_MINIMALDATA,
+    "DISCOURAGE_UPGRADABLE_NOPS": SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS,
+    "CLEANSTACK": SCRIPT_VERIFY_CLEANSTACK,
+    "CHECKLOCKTIMEVERIFY": SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
+    "CHECKSEQUENCEVERIFY": SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
+    "MINIMALIF": SCRIPT_VERIFY_MINIMALIF,
+    "NULLFAIL": SCRIPT_VERIFY_NULLFAIL,
+    "WITNESS": SCRIPT_VERIFY_WITNESS,
+    "DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM": SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM,
+    "WITNESS_PUBKEYTYPE": SCRIPT_VERIFY_WITNESS_PUBKEYTYPE,
+    "CONST_SCRIPTCODE": SCRIPT_VERIFY_CONST_SCRIPTCODE,
 }
 
 SCRIPT_VERIFY_FLAGS_NAMES = {v: k for k, v in SCRIPT_VERIFY_FLAGS_BY_NAME.items()}
@@ -145,28 +204,42 @@ SCRIPT_VERIFY_FLAGS_NAMES = {v: k for k, v in SCRIPT_VERIFY_FLAGS_BY_NAME.items(
 
 def _opcode_name(sop: Optional[CScriptOp]) -> str:
     if sop is None:
-        return 'unspecified opcode'
-    return OPCODE_NAMES.get(sop, 'unknown opcode')
+        return "unspecified opcode"
+    return OPCODE_NAMES.get(sop, "unknown opcode")
 
 
 class ScriptEvalState:
-    __slots__: List[str] = ['sop', 'sop_data', 'sop_pc', 'stack', 'scriptIn',
-                            'txTo', 'inIdx', 'flags', 'altstack', 'vfExec',
-                            'pbegincodehash', 'nOpCount']
+    __slots__: List[str] = [
+        "sop",
+        "sop_data",
+        "sop_pc",
+        "stack",
+        "scriptIn",
+        "txTo",
+        "inIdx",
+        "flags",
+        "altstack",
+        "vfExec",
+        "pbegincodehash",
+        "nOpCount",
+    ]
 
-    def __init__(self, *,
-                 sop: Optional[CScriptOp] = None,
-                 sop_data: Optional[bytes] = None,
-                 sop_pc: Optional[int] = None,
-                 stack: Optional[List[bytes]] = None,
-                 scriptIn: Optional[CScript] = None,
-                 txTo: Optional['bitcointx.core.CTransaction'] = None,
-                 inIdx: Optional[int] = None,
-                 flags: Optional[Set[ScriptVerifyFlag_Type]] = None,
-                 altstack: Optional[List[bytes]] = None,
-                 vfExec: Optional[List[bool]] = None,
-                 pbegincodehash: Optional[int] = None,
-                 nOpCount: Optional[int] = None):
+    def __init__(
+        self,
+        *,
+        sop: Optional[CScriptOp] = None,
+        sop_data: Optional[bytes] = None,
+        sop_pc: Optional[int] = None,
+        stack: Optional[List[bytes]] = None,
+        scriptIn: Optional[CScript] = None,
+        txTo: Optional["bitcointx.core.CTransaction"] = None,
+        inIdx: Optional[int] = None,
+        flags: Optional[Set[ScriptVerifyFlag_Type]] = None,
+        altstack: Optional[List[bytes]] = None,
+        vfExec: Optional[List[bool]] = None,
+        pbegincodehash: Optional[int] = None,
+        nOpCount: Optional[int] = None,
+    ):
         self.sop = sop
         self.sop_data = sop_data
         self.sop_pc = sop_pc
@@ -193,38 +266,42 @@ class EvalScriptError(bitcointx.core.ValidationError):
     """
 
     def __init__(self, msg: str, state: ScriptEvalState) -> None:
-        super().__init__('EvalScript: %s' % msg)
+        super().__init__("EvalScript: %s" % msg)
         self.state = state
 
 
 class MaxOpCountError(EvalScriptError):
     def __init__(self, state: ScriptEvalState) -> None:
-        super().__init__('max opcode count exceeded', state)
+        super().__init__("max opcode count exceeded", state)
 
 
 class MissingOpArgumentsError(EvalScriptError):
     """Missing arguments"""
-    def __init__(self, state: ScriptEvalState, *, expected_stack_depth: int
-                 ) -> None:
-        n_items = '?' if state.stack is None else f'{len(state.stack)}'
-        super().__init__((f'missing arguments for {_opcode_name(state.sop)}; '
-                          f'need {expected_stack_depth} items, '
-                          f'but only {n_items} on stack'),
-                         state)
+
+    def __init__(self, state: ScriptEvalState, *, expected_stack_depth: int) -> None:
+        n_items = "?" if state.stack is None else f"{len(state.stack)}"
+        super().__init__(
+            (
+                f"missing arguments for {_opcode_name(state.sop)}; "
+                f"need {expected_stack_depth} items, "
+                f"but only {n_items} on stack"
+            ),
+            state,
+        )
 
 
 class ArgumentsInvalidError(EvalScriptError):
     """Arguments are invalid"""
-    def __init__(self, msg: Optional[str], state: ScriptEvalState
-                 ) -> None:
-        super().__init__(f'{_opcode_name(state.sop)} args invalid: {msg}',
-                         state)
+
+    def __init__(self, msg: Optional[str], state: ScriptEvalState) -> None:
+        super().__init__(f"{_opcode_name(state.sop)} args invalid: {msg}", state)
 
 
 class VerifyOpFailedError(EvalScriptError):
     """A VERIFY opcode failed"""
+
     def __init__(self, state: ScriptEvalState) -> None:
-        super().__init__(f'{_opcode_name(state.sop)} failed', state)
+        super().__init__(f"{_opcode_name(state.sop)} failed", state)
 
 
 # A canonical signature exists of: <30> <total len> <02> <len R> <R> <02> <len S> <S> <hashtype>
@@ -252,7 +329,7 @@ def _IsValidSignatureEncoding(sig: bytes) -> bool:  # noqa
     #   signature)
 
     # Minimum and maximum size constraints.
-    if (len(sig) < 9):
+    if len(sig) < 9:
         return False
 
     if len(sig) > 73:
@@ -350,13 +427,16 @@ def _IsCompressedPubKey(pubkey: bytes) -> bool:
     return True
 
 
-def VerifyWitnessProgram(witness: CScriptWitness,
-                         witversion: int, program: bytes,
-                         txTo: 'bitcointx.core.CTransaction',
-                         inIdx: int,
-                         flags: Set[ScriptVerifyFlag_Type] = set(),
-                         amount: int = 0,
-                         script_class: Type[CScript] = CScript) -> None:
+def VerifyWitnessProgram(
+    witness: CScriptWitness,
+    witversion: int,
+    program: bytes,
+    txTo: "bitcointx.core.CTransaction",
+    inIdx: int,
+    flags: Set[ScriptVerifyFlag_Type] = set(),
+    amount: int = 0,
+    script_class: Type[CScript] = CScript,
+) -> None:
 
     if script_class is None:
         raise ValueError("script class must be specified")
@@ -381,8 +461,7 @@ def VerifyWitnessProgram(witness: CScriptWitness,
             if len(stack) != 2:
                 raise VerifyScriptError("witness program mismatch")  # 2 items in witness
 
-            scriptPubKey = script_class([OP_DUP, OP_HASH160, program,
-                                         OP_EQUALVERIFY, OP_CHECKSIG])
+            scriptPubKey = script_class([OP_DUP, OP_HASH160, program, OP_EQUALVERIFY, OP_CHECKSIG])
         else:
             raise VerifyScriptError("wrong length for witness program")
     elif SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_WITNESS_PROGRAM in flags:
@@ -402,8 +481,8 @@ def VerifyWitnessProgram(witness: CScriptWitness,
         # Disallow stack item size > MAX_SCRIPT_ELEMENT_SIZE in witness stack
         if elt_len > MAX_SCRIPT_ELEMENT_SIZE:
             raise VerifyScriptError(
-                "maximum push size exceeded by an item at position {} "
-                "on witness stack".format(i))
+                "maximum push size exceeded by an item at position {} on witness stack".format(i)
+            )
 
     EvalScript(stack, scriptPubKey, txTo, inIdx, flags=flags, amount=amount, sigversion=sigversion)
 
@@ -419,14 +498,12 @@ def VerifyWitnessProgram(witness: CScriptWitness,
     return
 
 
-def _CastToBigNum(b: bytes, get_eval_state: Callable[[], ScriptEvalState]
-                  ) -> int:
+def _CastToBigNum(b: bytes, get_eval_state: Callable[[], ScriptEvalState]) -> int:
     if len(b) > MAX_NUM_SIZE:
-        raise EvalScriptError('CastToBigNum() : overflow', get_eval_state())
+        raise EvalScriptError("CastToBigNum() : overflow", get_eval_state())
     v = bitcointx.core._bignum.vch2bn(b)
     if v is None:
-        raise EvalScriptError('CastToBigNum() : invalid value',
-                              get_eval_state())
+        raise EvalScriptError("CastToBigNum() : invalid value", get_eval_state())
     return v
 
 
@@ -441,10 +518,16 @@ def _CastToBool(b: bytes) -> bool:
     return False
 
 
-def _CheckSig(sig: bytes, pubkey: bytes, script: CScript,
-              txTo: 'bitcointx.core.CTransaction', inIdx: int,
-              flags: Set[ScriptVerifyFlag_Type], amount: int = 0,
-              sigversion: SIGVERSION_Type = SIGVERSION_BASE) -> bool:
+def _CheckSig(
+    sig: bytes,
+    pubkey: bytes,
+    script: CScript,
+    txTo: "bitcointx.core.CTransaction",
+    inIdx: int,
+    flags: Set[ScriptVerifyFlag_Type],
+    amount: int = 0,
+    sigversion: SIGVERSION_Type = SIGVERSION_BASE,
+) -> bool:
     key = bitcointx.core.key.CPubKey(pubkey)
 
     if len(sig) == 0:
@@ -456,8 +539,7 @@ def _CheckSig(sig: bytes, pubkey: bytes, script: CScript,
         verify_fn = key.verify
 
         if not _IsValidSignatureEncoding(sig):
-            raise VerifyScriptError(
-                "signature DER encoding is not strictly valid")
+            raise VerifyScriptError("signature DER encoding is not strictly valid")
 
         if SCRIPT_VERIFY_STRICTENC in flags:
             low_hashtype = hashtype & (~SIGHASH_ANYONECANPAY)
@@ -484,18 +566,23 @@ def _CheckSig(sig: bytes, pubkey: bytes, script: CScript,
     # imply the scriptSig being checked doesn't correspond to a valid txout -
     # that should cause other validation machinery to fail long before we ever
     # got here.
-    (h, err) = script.raw_sighash(
-        txTo, inIdx, hashtype, amount=amount, sigversion=sigversion)
+    (h, err) = script.raw_sighash(txTo, inIdx, hashtype, amount=amount, sigversion=sigversion)
 
     return verify_fn(h, sig[:-1])
 
 
-def _CheckMultiSig(opcode: CScriptOp, script: CScript,
-                   stack: List[bytes], txTo: 'bitcointx.core.CTransaction',
-                   inIdx: int, flags: Set[ScriptVerifyFlag_Type],
-                   get_eval_state: Callable[[], ScriptEvalState],
-                   nOpCount: List[int], amount: int = 0,
-                   sigversion: SIGVERSION_Type = SIGVERSION_BASE) -> None:
+def _CheckMultiSig(
+    opcode: CScriptOp,
+    script: CScript,
+    stack: List[bytes],
+    txTo: "bitcointx.core.CTransaction",
+    inIdx: int,
+    flags: Set[ScriptVerifyFlag_Type],
+    get_eval_state: Callable[[], ScriptEvalState],
+    nOpCount: List[int],
+    amount: int = 0,
+    sigversion: SIGVERSION_Type = SIGVERSION_BASE,
+) -> None:
 
     i = 1
     if len(stack) < i:
@@ -514,8 +601,7 @@ def _CheckMultiSig(opcode: CScriptOp, script: CScript,
     if nOpCount[0] > MAX_SCRIPT_OPCODES:
         raise MaxOpCountError(get_eval_state())
     if len(stack) < i:
-        raise ArgumentsInvalidError("not enough keys on stack",
-                                    get_eval_state())
+        raise ArgumentsInvalidError("not enough keys on stack", get_eval_state())
 
     sigs_count = _CastToBigNum(stack[-i], get_eval_state)
     if sigs_count < 0 or sigs_count > keys_count:
@@ -524,9 +610,8 @@ def _CheckMultiSig(opcode: CScriptOp, script: CScript,
     i += 1
     isig = i
     i += sigs_count
-    if len(stack) < i-1:
-        raise ArgumentsInvalidError("not enough sigs on stack",
-                                    get_eval_state())
+    if len(stack) < i - 1:
+        raise ArgumentsInvalidError("not enough sigs on stack", get_eval_state())
     elif len(stack) < i:
         raise ArgumentsInvalidError("missing dummy value", get_eval_state())
 
@@ -544,8 +629,7 @@ def _CheckMultiSig(opcode: CScriptOp, script: CScript,
         empty_sig_count += int(len(sig) == 0)
         pubkey = stack[-ikey]
 
-        if _CheckSig(sig, pubkey, script, txTo, inIdx, flags,
-                     amount=amount, sigversion=sigversion):
+        if _CheckSig(sig, pubkey, script, txTo, inIdx, flags, amount=amount, sigversion=sigversion):
             isig += 1
             sigs_count -= 1
 
@@ -561,7 +645,9 @@ def _CheckMultiSig(opcode: CScriptOp, script: CScript,
 
     while i > 1:
         if not success and SCRIPT_VERIFY_NULLFAIL in flags and ikey2 == 0 and len(stack[-1]):
-            raise VerifyScriptError("signature check failed, and some of the signatures are not empty")
+            raise VerifyScriptError(
+                "signature check failed, and some of the signatures are not empty"
+            )
 
         if ikey2 > 0:
             ikey2 -= 1
@@ -572,9 +658,8 @@ def _CheckMultiSig(opcode: CScriptOp, script: CScript,
     # Note how Bitcoin Core duplicates the len(stack) check, rather than
     # letting pop() handle it; maybe that's wrong?
     if len(stack) and SCRIPT_VERIFY_NULLDUMMY in flags:
-        if stack[-1] != b'':
-            raise ArgumentsInvalidError("dummy value not OP_0",
-                                        get_eval_state())
+        if stack[-1] != b"":
+            raise ArgumentsInvalidError("dummy value not OP_0", get_eval_state())
 
     stack.pop()
 
@@ -598,8 +683,9 @@ _ISA_UNOP = {
 }
 
 
-def _UnaryOp(opcode: CScriptOp, stack: List[bytes],
-             get_eval_state: Callable[[], ScriptEvalState]) -> None:
+def _UnaryOp(
+    opcode: CScriptOp, stack: List[bytes], get_eval_state: Callable[[], ScriptEvalState]
+) -> None:
     if len(stack) < 1:
         raise MissingOpArgumentsError(get_eval_state(), expected_stack_depth=1)
     bn = _CastToBigNum(stack[-1], get_eval_state)
@@ -648,8 +734,9 @@ _ISA_BINOP = {
 }
 
 
-def _BinOp(opcode: CScriptOp, stack: List[bytes],
-           get_eval_state: Callable[[], ScriptEvalState]) -> None:
+def _BinOp(
+    opcode: CScriptOp, stack: List[bytes], get_eval_state: Callable[[], ScriptEvalState]
+) -> None:
     if len(stack) < 2:
         raise MissingOpArgumentsError(get_eval_state(), expected_stack_depth=2)
 
@@ -726,20 +813,21 @@ def _CheckExec(vfExec: List[bool]) -> bool:
     return True
 
 
-def _EvalScript(stack: List[bytes], scriptIn: CScript,
-                txTo: 'bitcointx.core.CTransaction',
-                inIdx: int, flags: Set[ScriptVerifyFlag_Type] = set(),
-                amount: int = 0, sigversion: SIGVERSION_Type = SIGVERSION_BASE
-                ) -> None:
-    """Evaluate a script
-
-    """
+def _EvalScript(
+    stack: List[bytes],
+    scriptIn: CScript,
+    txTo: "bitcointx.core.CTransaction",
+    inIdx: int,
+    flags: Set[ScriptVerifyFlag_Type] = set(),
+    amount: int = 0,
+    sigversion: SIGVERSION_Type = SIGVERSION_BASE,
+) -> None:
+    """Evaluate a script"""
     if len(scriptIn) > MAX_SCRIPT_SIZE:
-        raise EvalScriptError((f'script too large; got {len(scriptIn)} bytes; '
-                               f'maximum {MAX_SCRIPT_SIZE} bytes'),
-                              ScriptEvalState(stack=stack, scriptIn=scriptIn,
-                                              txTo=txTo, inIdx=inIdx,
-                                              flags=flags))
+        raise EvalScriptError(
+            (f"script too large; got {len(scriptIn)} bytes; maximum {MAX_SCRIPT_SIZE} bytes"),
+            ScriptEvalState(stack=stack, scriptIn=scriptIn, txTo=txTo, inIdx=inIdx, flags=flags),
+        )
 
     altstack: List[bytes] = []
     vfExec: List[bool] = []
@@ -748,7 +836,7 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
     v_bytes: bytes
     v_int: int
     v_bool: bool
-    for (sop, sop_data, sop_pc) in scriptIn.raw_iter():
+    for sop, sop_data, sop_pc in scriptIn.raw_iter():
         fExec = _CheckExec(vfExec)
 
         def get_eval_state() -> ScriptEvalState:
@@ -764,11 +852,11 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
                 altstack=altstack,
                 vfExec=vfExec,
                 pbegincodehash=pbegincodehash,
-                nOpCount=nOpCount[0])
+                nOpCount=nOpCount[0],
+            )
 
         if sop in DISABLED_OPCODES:
-            raise EvalScriptError(f'opcode {_opcode_name(sop)} is disabled',
-                                  get_eval_state())
+            raise EvalScriptError(f"opcode {_opcode_name(sop)} is disabled", get_eval_state())
 
         if sop > OP_16:
             nOpCount[0] += 1
@@ -777,23 +865,24 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
 
         def check_args(n: int) -> None:
             if len(stack) < n:
-                raise MissingOpArgumentsError(get_eval_state(),
-                                              expected_stack_depth=n)
+                raise MissingOpArgumentsError(get_eval_state(), expected_stack_depth=n)
 
         if sop <= OP_PUSHDATA4:
             assert sop_data is not None
             if len(sop_data) > MAX_SCRIPT_ELEMENT_SIZE:
                 raise EvalScriptError(
-                    (f'PUSHDATA of length {len(sop_data)}; '
-                     f'maximum allowed is {MAX_SCRIPT_ELEMENT_SIZE}'),
-                    get_eval_state())
+                    (
+                        f"PUSHDATA of length {len(sop_data)}; "
+                        f"maximum allowed is {MAX_SCRIPT_ELEMENT_SIZE}"
+                    ),
+                    get_eval_state(),
+                )
 
             elif fExec:
                 stack.append(sop_data)
                 continue
 
         elif fExec or (OP_IF <= sop <= OP_ENDIF):
-
             if sop == OP_1NEGATE or ((sop >= OP_1) and (sop <= OP_16)):
                 v_int = sop - (OP_1 - 1)
                 stack.append(bitcointx.core._bignum.bn2vch(v_int))
@@ -853,9 +942,18 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
 
             elif sop == OP_CHECKMULTISIG or sop == OP_CHECKMULTISIGVERIFY:
                 tmpScript = scriptIn.__class__(scriptIn[pbegincodehash:])
-                _CheckMultiSig(sop, tmpScript, stack, txTo, inIdx, flags,
-                               get_eval_state, nOpCount,
-                               amount=amount, sigversion=sigversion)
+                _CheckMultiSig(
+                    sop,
+                    tmpScript,
+                    stack,
+                    txTo,
+                    inIdx,
+                    flags,
+                    get_eval_state,
+                    nOpCount,
+                    amount=amount,
+                    sigversion=sigversion,
+                )
 
             elif sop == OP_CHECKSIG or sop == OP_CHECKSIGVERIFY:
                 check_args(2)
@@ -867,11 +965,18 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
 
                 if sigversion == SIGVERSION_BASE:
                     # Drop the signature in pre-segwit scripts but not segwit scripts
-                    tmpScript = FindAndDelete(tmpScript,
-                                              scriptIn.__class__([vchSig]))
+                    tmpScript = FindAndDelete(tmpScript, scriptIn.__class__([vchSig]))
 
-                ok = _CheckSig(vchSig, vchPubKey, tmpScript, txTo, inIdx, flags,
-                               amount=amount, sigversion=sigversion)
+                ok = _CheckSig(
+                    vchSig,
+                    vchPubKey,
+                    tmpScript,
+                    txTo,
+                    inIdx,
+                    flags,
+                    amount=amount,
+                    sigversion=sigversion,
+                )
                 if not ok and SCRIPT_VERIFY_NULLFAIL in flags and len(vchSig):
                     raise VerifyScriptError("signature check failed, and signature is not empty")
                 if not ok and sop == OP_CHECKSIGVERIFY:
@@ -907,14 +1012,12 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
 
             elif sop == OP_ELSE:
                 if len(vfExec) == 0:
-                    raise EvalScriptError('ELSE found without prior IF',
-                                          get_eval_state())
+                    raise EvalScriptError("ELSE found without prior IF", get_eval_state())
                 vfExec[-1] = not vfExec[-1]
 
             elif sop == OP_ENDIF:
                 if len(vfExec) == 0:
-                    raise EvalScriptError('ENDIF found without prior IF',
-                                          get_eval_state())
+                    raise EvalScriptError("ENDIF found without prior IF", get_eval_state())
                 vfExec.pop()
 
             elif sop == OP_EQUAL:
@@ -940,8 +1043,7 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
 
             elif sop == OP_FROMALTSTACK:
                 if len(altstack) < 1:
-                    raise MissingOpArgumentsError(get_eval_state(),
-                                                  expected_stack_depth=1)
+                    raise MissingOpArgumentsError(get_eval_state(), expected_stack_depth=1)
                 v_bytes = altstack.pop()
                 stack.append(v_bytes)
 
@@ -987,9 +1089,9 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
 
             elif sop >= OP_NOP1 and sop <= OP_NOP10:
                 if SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS in flags:
-                    raise EvalScriptError((f"{_opcode_name(sop)} reserved "
-                                           f"for soft-fork upgrades"),
-                                          get_eval_state())
+                    raise EvalScriptError(
+                        (f"{_opcode_name(sop)} reserved for soft-fork upgrades"), get_eval_state()
+                    )
                 else:
                     pass
 
@@ -1003,11 +1105,11 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
                 n = _CastToBigNum(stack.pop(), get_eval_state)
                 if n < 0 or n >= len(stack):
                     raise EvalScriptError(
-                        f"Argument for {_opcode_name(sop)} out of bounds",
-                        get_eval_state())
-                vch = stack[-n-1]
+                        f"Argument for {_opcode_name(sop)} out of bounds", get_eval_state()
+                    )
+                vch = stack[-n - 1]
                 if sop == OP_ROLL:
-                    del stack[-n-1]
+                    del stack[-n - 1]
                 stack.append(vch)
 
             elif sop == OP_RETURN:
@@ -1081,27 +1183,29 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
                     stack.append(b"\x00")
 
             else:
-                raise EvalScriptError('unsupported opcode 0x%x' % sop,
-                                      get_eval_state())
+                raise EvalScriptError("unsupported opcode 0x%x" % sop, get_eval_state())
 
         # size limits
         if len(stack) + len(altstack) > MAX_STACK_ITEMS:
-            raise EvalScriptError('max stack items limit reached',
-                                  get_eval_state())
+            raise EvalScriptError("max stack items limit reached", get_eval_state())
 
     # Unterminated IF/NOTIF/ELSE block
     if len(vfExec):
         raise EvalScriptError(
-            'Unterminated IF/ELSE block',
-            ScriptEvalState(stack=stack, scriptIn=scriptIn,
-                            txTo=txTo, inIdx=inIdx, flags=flags))
+            "Unterminated IF/ELSE block",
+            ScriptEvalState(stack=stack, scriptIn=scriptIn, txTo=txTo, inIdx=inIdx, flags=flags),
+        )
 
 
-def EvalScript(stack: List[bytes], scriptIn: CScript,
-               txTo: 'bitcointx.core.CTransaction',
-               inIdx: int, flags: Set[ScriptVerifyFlag_Type] = set(),
-               amount: int = 0, sigversion: SIGVERSION_Type = SIGVERSION_BASE
-               ) -> None:
+def EvalScript(
+    stack: List[bytes],
+    scriptIn: CScript,
+    txTo: "bitcointx.core.CTransaction",
+    inIdx: int,
+    flags: Set[ScriptVerifyFlag_Type] = set(),
+    amount: int = 0,
+    sigversion: SIGVERSION_Type = SIGVERSION_BASE,
+) -> None:
     """Evaluate a script
 
     stack      - Initial stack
@@ -1118,24 +1222,27 @@ def EvalScript(stack: List[bytes], scriptIn: CScript,
     """
 
     try:
-        _EvalScript(stack, scriptIn, txTo, inIdx, flags=flags, amount=amount,
-                    sigversion=sigversion)
+        _EvalScript(stack, scriptIn, txTo, inIdx, flags=flags, amount=amount, sigversion=sigversion)
     except CScriptInvalidError as err:
         raise EvalScriptError(
-            repr(err), ScriptEvalState(stack=stack, scriptIn=scriptIn,
-                                       txTo=txTo, inIdx=inIdx, flags=flags))
+            repr(err),
+            ScriptEvalState(stack=stack, scriptIn=scriptIn, txTo=txTo, inIdx=inIdx, flags=flags),
+        )
 
 
 class VerifyScriptError(bitcointx.core.ValidationError):
     pass
 
 
-def VerifyScript(scriptSig: CScript, scriptPubKey: CScript,
-                 txTo: 'bitcointx.core.CTransaction', inIdx: int,
-                 flags: Optional[Union[Tuple[ScriptVerifyFlag_Type, ...],
-                                       Set[ScriptVerifyFlag_Type]]] = None,
-                 amount: int = 0, witness: Optional[CScriptWitness] = None
-                 ) -> None:
+def VerifyScript(
+    scriptSig: CScript,
+    scriptPubKey: CScript,
+    txTo: "bitcointx.core.CTransaction",
+    inIdx: int,
+    flags: Optional[Union[Tuple[ScriptVerifyFlag_Type, ...], Set[ScriptVerifyFlag_Type]]] = None,
+    amount: int = 0,
+    witness: Optional[CScriptWitness] = None,
+) -> None:
     """Verify a scriptSig satisfies a scriptPubKey
 
     scriptSig    - Signature
@@ -1149,10 +1256,9 @@ def VerifyScript(scriptSig: CScript, scriptPubKey: CScript,
     Raises a ValidationError subclass if the validation fails.
     """
 
-    ensure_isinstance(scriptSig, CScript, 'scriptSig')
+    ensure_isinstance(scriptSig, CScript, "scriptSig")
     if not type(scriptSig) == type(scriptPubKey):  # noqa: exact class check
-        raise TypeError(
-            "scriptSig and scriptPubKey must be of the same script class")
+        raise TypeError("scriptSig and scriptPubKey must be of the same script class")
 
     script_class = scriptSig.__class__
 
@@ -1163,8 +1269,10 @@ def VerifyScript(scriptSig: CScript, scriptPubKey: CScript,
 
     if flags & UNHANDLED_SCRIPT_VERIFY_FLAGS:
         raise VerifyScriptError(
-            "some of the flags cannot be handled by current code: {}"
-            .format(script_verify_flags_to_string(flags & UNHANDLED_SCRIPT_VERIFY_FLAGS)))
+            "some of the flags cannot be handled by current code: {}".format(
+                script_verify_flags_to_string(flags & UNHANDLED_SCRIPT_VERIFY_FLAGS)
+            )
+        )
 
     stack: List[bytes] = []
     EvalScript(stack, scriptSig, txTo, inIdx, flags=flags)
@@ -1186,11 +1294,16 @@ def VerifyScript(scriptSig: CScript, scriptPubKey: CScript,
         if scriptSig:
             raise VerifyScriptError("scriptSig is not empty")
 
-        VerifyWitnessProgram(witness,
-                             scriptPubKey.witness_version(),
-                             scriptPubKey.witness_program(),
-                             txTo, inIdx, flags=flags, amount=amount,
-                             script_class=script_class)
+        VerifyWitnessProgram(
+            witness,
+            scriptPubKey.witness_version(),
+            scriptPubKey.witness_program(),
+            txTo,
+            inIdx,
+            flags=flags,
+            amount=amount,
+            script_class=script_class,
+        )
 
         # Bypass the cleanstack check at the end. The actual stack is obviously not clean
         # for witness programs.
@@ -1224,13 +1337,20 @@ def VerifyScript(scriptSig: CScript, scriptPubKey: CScript,
             hadWitness = True
 
             if scriptSig != script_class([pubKey2]):
-                raise VerifyScriptError("scriptSig is not exactly a single push of the redeemScript")
+                raise VerifyScriptError(
+                    "scriptSig is not exactly a single push of the redeemScript"
+                )
 
-            VerifyWitnessProgram(witness,
-                                 pubKey2.witness_version(),
-                                 pubKey2.witness_program(),
-                                 txTo, inIdx, flags=flags, amount=amount,
-                                 script_class=script_class)
+            VerifyWitnessProgram(
+                witness,
+                pubKey2.witness_version(),
+                pubKey2.witness_program(),
+                txTo,
+                inIdx,
+                flags=flags,
+                amount=amount,
+                script_class=script_class,
+            )
 
             # Bypass the cleanstack check at the end. The actual stack is obviously not clean
             # for witness programs.
@@ -1238,8 +1358,7 @@ def VerifyScript(scriptSig: CScript, scriptPubKey: CScript,
 
     if SCRIPT_VERIFY_CLEANSTACK in flags:
         if SCRIPT_VERIFY_P2SH not in flags:
-            raise ValueError(
-                'SCRIPT_VERIFY_CLEANSTACK requires SCRIPT_VERIFY_P2SH')
+            raise ValueError("SCRIPT_VERIFY_CLEANSTACK requires SCRIPT_VERIFY_P2SH")
 
         if len(stack) == 0:
             raise VerifyScriptError("scriptPubKey left an empty stack")
@@ -1251,8 +1370,7 @@ def VerifyScript(scriptSig: CScript, scriptPubKey: CScript,
         # that WITNESS implies P2SH. Otherwise, going from WITNESS->P2SH+WITNESS would be
         # possible, which is not a softfork.
         if SCRIPT_VERIFY_P2SH not in flags:
-            raise ValueError(
-                "SCRIPT_VERIFY_WITNESS requires SCRIPT_VERIFY_P2SH")
+            raise ValueError("SCRIPT_VERIFY_WITNESS requires SCRIPT_VERIFY_P2SH")
 
         if not hadWitness and witness:
             raise VerifyScriptError("Unexpected witness")
@@ -1263,9 +1381,9 @@ class VerifySignatureError(bitcointx.core.ValidationError):
 
 
 # XXX not tested for segwit, not covered by tests
-def VerifySignature(txFrom: 'bitcointx.core.CTransaction',
-                    txTo: 'bitcointx.core.CTransaction',
-                    inIdx: int) -> None:
+def VerifySignature(
+    txFrom: "bitcointx.core.CTransaction", txTo: "bitcointx.core.CTransaction", inIdx: int
+) -> None:
     """Verify a scriptSig signature can spend a txout
 
     Verifies that the scriptSig in txTo.vin[inIdx] is a valid scriptSig for the
@@ -1290,32 +1408,38 @@ def VerifySignature(txFrom: 'bitcointx.core.CTransaction',
     if txTo.wit:
         witness = txTo.wit.vtxinwit[inIdx].scriptWitness
 
-    VerifyScript(txin.scriptSig, txout.scriptPubKey, txTo, inIdx,
-                 amount=txout.nValue, witness=witness or CScriptWitness([]))
+    VerifyScript(
+        txin.scriptSig,
+        txout.scriptPubKey,
+        txTo,
+        inIdx,
+        amount=txout.nValue,
+        witness=witness or CScriptWitness([]),
+    )
 
 
 __all__ = (
-    'MAX_STACK_ITEMS',
-    'SCRIPT_VERIFY_P2SH',
-    'SCRIPT_VERIFY_STRICTENC',
-    'SCRIPT_VERIFY_DERSIG',
-    'SCRIPT_VERIFY_LOW_S',
-    'SCRIPT_VERIFY_NULLDUMMY',
-    'SCRIPT_VERIFY_SIGPUSHONLY',
-    'SCRIPT_VERIFY_MINIMALDATA',
-    'SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS',
-    'SCRIPT_VERIFY_CLEANSTACK',
-    'SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY',
-    'SCRIPT_VERIFY_FLAGS_BY_NAME',
-    'EvalScriptError',
-    'MaxOpCountError',
-    'MissingOpArgumentsError',
-    'ArgumentsInvalidError',
-    'VerifyOpFailedError',
-    'EvalScript',
-    'VerifyScriptError',
-    'VerifyScript',
-    'VerifySignatureError',
-    'VerifySignature',
-    'script_verify_flags_to_string',
+    "MAX_STACK_ITEMS",
+    "SCRIPT_VERIFY_P2SH",
+    "SCRIPT_VERIFY_STRICTENC",
+    "SCRIPT_VERIFY_DERSIG",
+    "SCRIPT_VERIFY_LOW_S",
+    "SCRIPT_VERIFY_NULLDUMMY",
+    "SCRIPT_VERIFY_SIGPUSHONLY",
+    "SCRIPT_VERIFY_MINIMALDATA",
+    "SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_NOPS",
+    "SCRIPT_VERIFY_CLEANSTACK",
+    "SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY",
+    "SCRIPT_VERIFY_FLAGS_BY_NAME",
+    "EvalScriptError",
+    "MaxOpCountError",
+    "MissingOpArgumentsError",
+    "ArgumentsInvalidError",
+    "VerifyOpFailedError",
+    "EvalScript",
+    "VerifyScriptError",
+    "VerifyScript",
+    "VerifySignatureError",
+    "VerifySignature",
+    "script_verify_flags_to_string",
 )

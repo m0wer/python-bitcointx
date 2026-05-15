@@ -25,7 +25,7 @@ from bitcointx.segwit_addr import encode, decode
 
 
 def load_test_vectors(name: str) -> Iterator[Tuple[str, str]]:
-    with open(os.path.dirname(__file__) + '/data/' + name, 'r') as fd:
+    with open(os.path.dirname(__file__) + "/data/" + name, "r") as fd:
         for testcase in json.load(fd):
             yield testcase
 
@@ -36,20 +36,19 @@ def to_scriptPubKey(witver: int, witprog: bytes) -> CScript:
 
 
 class Test_bech32(unittest.TestCase):
-
     def op_decode(self, witver: int) -> int:
         """OP encoding to int"""
         if witver == OP_0:
             return 0
         if OP_1 <= witver <= OP_16:
             return witver - OP_1 + 1
-        self.fail('Wrong witver: %d' % witver)
+        self.fail("Wrong witver: %d" % witver)
 
     def test_encode_decode(self) -> None:
-        for exp_bin_str, exp_bech32 in load_test_vectors('bech32_encode_decode.json'):
-            exp_bin = unhexlify(exp_bin_str.encode('utf8'))
+        for exp_bin_str, exp_bech32 in load_test_vectors("bech32_encode_decode.json"):
+            exp_bin = unhexlify(exp_bin_str.encode("utf8"))
             witver = self.op_decode(exp_bin[0])
-            hrp = exp_bech32[:exp_bech32.rindex('1')].lower()
+            hrp = exp_bech32[: exp_bech32.rindex("1")].lower()
             self.assertEqual(exp_bin[1], len(exp_bin[2:]))
             act_bech32 = encode(hrp, witver, exp_bin[2:])
             assert act_bech32 is not None
@@ -63,16 +62,16 @@ class Test_bech32(unittest.TestCase):
 
 
 class MockBech32Data(CBech32Data):
-    bech32_hrp = 'bc'
+    bech32_hrp = "bc"
 
 
 class Test_CBech32Data(unittest.TestCase):
     def test_from_data(self) -> None:
-        test_bytes = unhexlify('751e76e8199196d454941c45d1b3a323f1433bd6')
+        test_bytes = unhexlify("751e76e8199196d454941c45d1b3a323f1433bd6")
         b = MockBech32Data.from_bytes(test_bytes, witver=0)
         self.assertEqual(b.bech32_witness_version, 0)
         self.assertEqual(b.__class__.bech32_witness_version, -1)
-        self.assertEqual(str(b).upper(), 'BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4')
+        self.assertEqual(str(b).upper(), "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4")
 
         with self.assertRaises(ValueError):
             MockBech32Data.from_bytes(test_bytes, witver=-1)
@@ -103,6 +102,6 @@ class Test_CBech32Data(unittest.TestCase):
             elif len(testdata) == 2:
                 invalid = testdata[0]
 
-            msg = '%r should have raised Bech32Error but did not' % invalid
+            msg = "%r should have raised Bech32Error but did not" % invalid
             with self.assertRaises(Bech32Error, msg=msg):
                 MockBech32Data(invalid)
