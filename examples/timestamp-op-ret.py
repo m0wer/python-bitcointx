@@ -14,25 +14,24 @@
 
 """Example of timestamping a file via OP_RETURN"""
 
+import argparse
 import sys
 
 import bitcointx.rpc
-import argparse
-
 from bitcointx import select_chain_params
 from bitcointx.core import (
-    Hash,
-    x,
-    lx,
-    b2x,
-    coins_to_satoshi,
     CoreCoinParams,
+    COutPoint,
     CTransaction,
     CTxIn,
     CTxOut,
-    COutPoint,
+    Hash,
+    b2x,
+    coins_to_satoshi,
+    lx,
+    x,
 )
-from bitcointx.core.script import CScript, OP_RETURN, OP_CHECKSIG
+from bitcointx.core.script import OP_CHECKSIG, OP_RETURN, CScript
 
 if sys.version_info.major < 3:
     sys.stderr.write("Sorry, Python 3.x required by this example.\n")
@@ -40,7 +39,6 @@ if sys.version_info.major < 3:
 
 
 def parser() -> "argparse.ArgumentParser":
-
     parser = argparse.ArgumentParser(
         description=("publish transaction with OP_RETURN containing a hash of file")
     )
@@ -75,7 +73,7 @@ if __name__ == "__main__":
                 digests.append(x(f))
             else:
                 raise exp
-        except IOError as exp:
+        except OSError as exp:
             print(exp, file=sys.stderr)
             continue
 

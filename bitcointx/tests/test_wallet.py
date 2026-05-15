@@ -12,61 +12,62 @@
 
 # pylama:ignore=E501
 
-import os
-import json
 import hashlib
+import json
+import os
 import unittest
-
-from typing import Iterable, Optional, Callable, Union, Type, List, Any
+from typing import Any, Callable, Iterable, List, Optional, Type, Union
 
 import bitcointx
 from bitcointx import (
-    ChainParams,
-    BitcoinSignetParams,
-    BitcoinRegtestParams,
     BitcoinMainnetParams,
+    BitcoinRegtestParams,
+    BitcoinSignetParams,
+    ChainParams,
     get_current_chain_params,
     select_chain_params,
 )
-from bitcointx.util import dispatcher_mapped_list
 from bitcointx.core import (
-    b2x,
-    x,
-    Hash160,
-    CTransaction,
     CMutableTransaction,
-    CTxOut,
     CMutableTxInWitness,
     CoreCoinParams,
-)
-from bitcointx.core.script import (
-    CScript,
-    IsLowDERSignature,
-    TaprootScriptTree,
-    SignatureHashSchnorr,
-    CScriptWitness,
-    SIGHASH_Type,
-    TaprootScriptTreeLeaf_Type,
+    CTransaction,
+    CTxOut,
+    Hash160,
+    b2x,
+    x,
 )
 from bitcointx.core.key import CPubKey, XOnlyPubKey, compute_tap_tweak_hash
+from bitcointx.core.script import (
+    CScript,
+    CScriptWitness,
+    IsLowDERSignature,
+    SIGHASH_Type,
+    SignatureHashSchnorr,
+    TaprootScriptTree,
+    TaprootScriptTreeLeaf_Type,
+)
+from bitcointx.util import dispatcher_mapped_list
 from bitcointx.wallet import (
-    CCoinAddressError as CBitcoinAddressError,
-    CCoinAddress,
-    CBitcoinAddress,
     CBase58BitcoinAddress,
     CBech32BitcoinAddress,
-    P2PKHCoinAddress,
-    P2SHCoinAddress,
-    P2WPKHCoinAddress,
-    P2WSHCoinAddress,
-    P2TRCoinAddress,
-    P2PKHBitcoinAddress,
-    P2SHBitcoinAddress,
-    P2WPKHBitcoinAddress,
-    P2WSHBitcoinAddress,
-    P2TRBitcoinAddress,
+    CBitcoinAddress,
     CBitcoinKey,
+    CCoinAddress,
     CCoinKey,
+    P2PKHBitcoinAddress,
+    P2PKHCoinAddress,
+    P2SHBitcoinAddress,
+    P2SHCoinAddress,
+    P2TRBitcoinAddress,
+    P2TRCoinAddress,
+    P2WPKHBitcoinAddress,
+    P2WPKHCoinAddress,
+    P2WSHBitcoinAddress,
+    P2WSHCoinAddress,
+)
+from bitcointx.wallet import (
+    CCoinAddressError as CBitcoinAddressError,
 )
 
 
@@ -101,9 +102,9 @@ def _test_address_implementations(
                     elif getattr(aclass, "from_redeemScript", None):
                         a = aclass.from_redeemScript(CScript(b"\xa9" + Hash160(pub) + b"\x87"))
                     else:
-                        assert len(dispatcher_mapped_list(aclass)) > 0, (
-                            "dispatcher mapped list for {} must not be empty".format(aclass)
-                        )
+                        assert (
+                            len(dispatcher_mapped_list(aclass)) > 0
+                        ), f"dispatcher mapped list for {aclass} must not be empty"
 
                     if a is not None:
                         spk = a.to_scriptPubKey()
@@ -715,7 +716,7 @@ class Test_RFC6979(unittest.TestCase):
             ),
         ]
         for vector in test_vectors:
-            secret = CBitcoinKey.from_secret_bytes(x("{:064x}".format(vector[0])))
+            secret = CBitcoinKey.from_secret_bytes(x(f"{vector[0]:064x}"))
             encoded_sig = secret.sign(
                 hashlib.sha256(vector[1].encode("utf8")).digest(), _ecdsa_sig_grind_low_r=False
             )
@@ -775,7 +776,7 @@ class TestChainParams(unittest.TestCase):
 
 class Test_BIP341_standard_vectors(unittest.TestCase):
     def setUp(self) -> None:
-        with open(os.path.dirname(__file__) + "/data/bip341-wallet-test-vectors.json", "r") as fd:
+        with open(os.path.dirname(__file__) + "/data/bip341-wallet-test-vectors.json") as fd:
             data = json.load(fd)
             assert data["version"] == 1
 

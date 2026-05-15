@@ -19,32 +19,31 @@ scriptPubKeys; currently there is no actual wallet support implemented.
 # pylama:ignore=E501,E221
 
 from io import BytesIO
-from typing import Type, TypeVar, Union, Optional, List, Callable, ClassVar, cast
+from typing import Callable, ClassVar, List, Optional, Type, TypeVar, Union, cast
 
 import bitcointx
 import bitcointx.base58
 import bitcointx.bech32
 import bitcointx.core
-
-from bitcointx.util import (
-    ClassMappingDispatcher,
-    activate_class_dispatcher,
-    dispatcher_mapped_list,
-    ensure_isinstance,
-)
 from bitcointx.core.key import (
-    CPubKey,
-    CKeyBase,
     CExtKeyBase,
     CExtPubKeyBase,
+    CKeyBase,
+    CPubKey,
     XOnlyPubKey,
     tap_tweak_pubkey,
 )
 from bitcointx.core.script import (
     CScript,
+    TaprootScriptTree,
     standard_keyhash_scriptpubkey,
     standard_scripthash_scriptpubkey,
-    TaprootScriptTree,
+)
+from bitcointx.util import (
+    ClassMappingDispatcher,
+    activate_class_dispatcher,
+    dispatcher_mapped_list,
+    ensure_isinstance,
 )
 
 
@@ -117,11 +116,11 @@ class CCoinAddress(WalletCoinClass):
 
         if recognized_encoding:
             raise CCoinAddressError(
-                "Correct encoding for any of {}, but not correct format".format(recognized_encoding)
+                f"Correct encoding for any of {recognized_encoding}, but not correct format"
             )
 
         raise CCoinAddressError(
-            "Unrecognized encoding for any of {}".format([tcls.__name__ for tcls in target_cls_set])
+            f"Unrecognized encoding for any of {[tcls.__name__ for tcls in target_cls_set]}"
         )
 
     @classmethod
@@ -139,7 +138,7 @@ class CCoinAddress(WalletCoinClass):
     def get_output_size(cls: Type[T_CCoinAddress]) -> int:
         data_length = getattr(cls, "_data_length", None)
         if not data_length:
-            raise TypeError("output size is not available for {}".format(cls.__name__))
+            raise TypeError(f"output size is not available for {cls.__name__}")
         inst = cls.from_bytes(b"\x00" * data_length)
         txo = bitcointx.core.CTxOut(scriptPubKey=inst.to_scriptPubKey())
         f = BytesIO()
@@ -159,7 +158,7 @@ class CCoinAddress(WalletCoinClass):
         calling this method on generic address class is an error."""
         spk_type = getattr(cls, "_scriptpubkey_type", None)
         if not spk_type:
-            raise TypeError("scriptPubKey type is not available for {}".format(cls.__name__))
+            raise TypeError(f"scriptPubKey type is not available for {cls.__name__}")
         return cls._scriptpubkey_type
 
     @classmethod

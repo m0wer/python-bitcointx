@@ -11,75 +11,72 @@
 
 # pylama:ignore=C901,E221
 
-from typing import (
-    TypeVar,
-    Tuple,
-    List,
-    Dict,
-    Set,
-    Union,
-    Type,
-    Any,
-    Optional,
-    Generator,
-    NamedTuple,
-    Callable,
-    Collection,
-)
-
 import base64
 import struct
-from enum import Enum
-from collections import OrderedDict
 from abc import abstractmethod
-
-from .serialize import (
-    BytesSerializer,
-    VarIntSerializer,
-    ByteStream_Type,
-    SerializationError,
-    SerializationTruncationError,
-    ser_read,
-    Serializable,
-    ImmutableSerializable,
+from collections import OrderedDict
+from enum import Enum
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Generator,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
 )
 
 import bitcointx.core
 
+from ..util import (
+    ClassMappingDispatcher,
+    activate_class_dispatcher,
+    assert_never,
+    ensure_isinstance,
+    no_bool_use_as_property,
+)
+from ..wallet import CCoinExtPubKey
 from . import (
-    CTransaction,
-    CTxIn,
-    CTxOut,
-    CTxInWitness,
-    CTxWitness,
-    b2x,
+    CheckTransaction,
+    CheckTransactionError,
     CMutableTxIn,
     CMutableTxOut,
-    CheckTransaction,
-    MoneyRange,
-    CheckTransactionError,
     CoreCoinParams,
+    CTransaction,
+    CTxIn,
+    CTxInWitness,
+    CTxOut,
+    CTxWitness,
+    MoneyRange,
+    b2x,
 )
-from .key import CPubKey, BIP32Path, KeyDerivationInfo, KeyStore
+from .key import BIP32Path, CPubKey, KeyDerivationInfo, KeyStore
 from .script import (
-    CScript,
-    CScriptWitness,
     SIGHASH_ALL,
-    SIGHASH_Type,
     SIGVERSION_BASE,
     SIGVERSION_WITNESS_V0,
     ComplexScriptSignatureHelper,
+    CScript,
+    CScriptWitness,
+    SIGHASH_Type,
     StandardMultisigSignatureHelper,
     standard_keyhash_scriptpubkey,
 )
-from ..wallet import CCoinExtPubKey
-
-from ..util import (
-    ensure_isinstance,
-    no_bool_use_as_property,
-    assert_never,
-    ClassMappingDispatcher,
-    activate_class_dispatcher,
+from .serialize import (
+    BytesSerializer,
+    ByteStream_Type,
+    ImmutableSerializable,
+    Serializable,
+    SerializationError,
+    SerializationTruncationError,
+    VarIntSerializer,
+    ser_read,
 )
 
 
@@ -135,29 +132,32 @@ class PSBT_OutKeyType(Enum):
     BIP32_DERIVATION = 0x02
 
 
-PSBT_InputSignInfo = NamedTuple(
-    "PSBT_InputSignInfo", [("num_new_sigs", int), ("num_sigs_missing", int), ("is_final", bool)]
-)
+class PSBT_InputSignInfo(NamedTuple):
+    num_new_sigs: int
+    num_sigs_missing: int
+    is_final: bool
 
-PSBT_SignResult = NamedTuple(
-    "PSBT_SignResult",
-    [
-        ("inputs_info", List[Optional[PSBT_InputSignInfo]]),
-        ("num_inputs_signed", int),
-        ("num_inputs_ready", int),
-        ("num_inputs_final", int),
-        ("is_ready", bool),
-        ("is_final", bool),
-    ],
-)
 
-PSBT_ProprietaryTypeData = NamedTuple(
-    "PSBT_ProprietaryTypeData", [("subtype", int), ("key_data", bytes), ("value", bytes)]
-)
+class PSBT_SignResult(NamedTuple):
+    inputs_info: List[Optional[PSBT_InputSignInfo]]
+    num_inputs_signed: int
+    num_inputs_ready: int
+    num_inputs_final: int
+    is_ready: bool
+    is_final: bool
 
-PSBT_UnknownTypeData = NamedTuple(
-    "PSBT_UnknownTypeData", [("key_type", int), ("key_data", bytes), ("value", bytes)]
-)
+
+class PSBT_ProprietaryTypeData(NamedTuple):
+    subtype: int
+    key_data: bytes
+    value: bytes
+
+
+class PSBT_UnknownTypeData(NamedTuple):
+    key_type: int
+    key_data: bytes
+    value: bytes
+
 
 T_KeyTypeEnum = TypeVar("T_KeyTypeEnum", PSBT_GlobalKeyType, PSBT_OutKeyType, PSBT_InKeyType)
 
@@ -701,7 +701,6 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
         self.sign(unsigned_tx, KeyStore(), finalize=False)
 
     def merge(self: T_PSBT_Input, other: T_PSBT_Input, allow_blob_duplicates: bool = False) -> None:
-
         # checks index fields, so need to be first
         merge_input_output_common_fields(self, other, "input")
 
@@ -880,7 +879,6 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
         script_sig_for_witness: Optional[CScript] = None,
         finalize: bool = True,
     ) -> PSBT_InputSignInfo:
-
         new_sigs, is_ready = msig_helper.sign(signer, self.partial_sigs)
 
         if is_ready:
@@ -1212,7 +1210,6 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
         index: Optional[int] = None,
         **kwargs: Any,
     ) -> T_PSBT_Input:
-
         partial_sigs: Dict[CPubKey, bytes] = OrderedDict()
         sighash_type: Optional[int] = None
         redeem_script: CScript = CScript()
@@ -1283,9 +1280,9 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                     raise SerializationError(
                         descr(f"Invalid pubkey encountered in {key_type.name}")
                     )
-                assert pub not in partial_sigs, (
-                    "duplicate keys should have been catched inside read_psbt_keymap()"
-                )
+                assert (
+                    pub not in partial_sigs
+                ), "duplicate keys should have been catched inside read_psbt_keymap()"
                 partial_sigs[pub] = value
             elif key_type is PSBT_InKeyType.SIGHASH_TYPE:
                 ensure_empty_key_data(key_type, key_data, descr(""))
@@ -1304,9 +1301,9 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                     raise SerializationError(
                         descr(f"Invalid pubkey encountered in {key_type.name}")
                     )
-                assert pub not in derivation_map, (
-                    "duplicate keys should have been catched inside read_psbt_keymap()"
-                )
+                assert (
+                    pub not in derivation_map
+                ), "duplicate keys should have been catched inside read_psbt_keymap()"
                 derivation_map[pub] = PSBT_KeyDerivationInfo.deserialize(value)
             elif key_type is PSBT_InKeyType.FINAL_SCRIPTSIG:
                 ensure_empty_key_data(key_type, key_data, descr(""))
@@ -1652,7 +1649,6 @@ class PSBT_Output(PSBT_CoinClass, next_dispatch_final=True):
     def stream_deserialize(
         cls: Type[T_PSBT_Output], f: ByteStream_Type, index: int = -1, **kwargs: Any
     ) -> T_PSBT_Output:
-
         if index < 0:
             raise ValueError("index is invalid or unspecified")
 
@@ -1681,9 +1677,9 @@ class PSBT_Output(PSBT_CoinClass, next_dispatch_final=True):
                     raise SerializationError(
                         descr(f"Invalid pubkey encountered in {key_type.name}")
                     )
-                assert pub not in derivation_map, (
-                    "duplicate keys should have been catched inside read_psbt_keymap()"
-                )
+                assert (
+                    pub not in derivation_map
+                ), "duplicate keys should have been catched inside read_psbt_keymap()"
                 derivation_map[pub] = PSBT_KeyDerivationInfo.deserialize(value)
             else:
                 assert_never(key_type)
@@ -1757,7 +1753,6 @@ class PartiallySignedTransaction(PSBT_CoinClass, next_dispatch_final=True):
         unknown_fields: Optional[List[PSBT_UnknownTypeData]] = None,
         relaxed_sanity_checks: bool = False,
     ) -> None:
-
         ensure_isinstance(version, int, "version")
         if version != 0:
             raise ValueError("Unsupported PSBT version")
@@ -1864,7 +1859,6 @@ class PartiallySignedTransaction(PSBT_CoinClass, next_dispatch_final=True):
             self._check_sanity()
 
     def _check_sanity(self) -> None:
-
         if self.unsigned_tx.is_null():
             return
 
@@ -1959,7 +1953,6 @@ class PartiallySignedTransaction(PSBT_CoinClass, next_dispatch_final=True):
         return new_psbt
 
     def add_input(self, txin: CTxIn, inp: PSBT_Input) -> None:
-
         if inp.index is not None and inp.index != len(self.unsigned_tx.vin):
             raise ValueError(
                 f"invalid index in supplied PSBT_Input "
@@ -2117,7 +2110,6 @@ class PartiallySignedTransaction(PSBT_CoinClass, next_dispatch_final=True):
         acceptable_xpub_prefixes: Collection[bytes] = (),
         **kwargs: Any,
     ) -> T_PartiallySignedTransaction:
-
         magic = ser_read(f, 5)
         if magic != CoreCoinParams.PSBT_MAGIC_HEADER_BYTES:
             raise SerializationError("Invalid partially-signed transaction header")
@@ -2153,9 +2145,9 @@ class PartiallySignedTransaction(PSBT_CoinClass, next_dispatch_final=True):
                     )
 
                 xpub = CCoinExtPubKey.from_bytes(key_data[4:])
-                assert xpub not in xpubs, (
-                    "duplicate keys should have been catched inside read_psbt_keymap()"
-                )
+                assert (
+                    xpub not in xpubs
+                ), "duplicate keys should have been catched inside read_psbt_keymap()"
                 xpubs[xpub] = PSBT_KeyDerivationInfo.deserialize(value)
 
             elif key_type is PSBT_GlobalKeyType.VERSION:
@@ -2206,7 +2198,6 @@ class PartiallySignedTransaction(PSBT_CoinClass, next_dispatch_final=True):
     def stream_serialize(
         self, f: ByteStream_Type, relaxed_sanity_checks: bool = False, **kwargs: Any
     ) -> None:
-
         self._check_consistency()
         if not relaxed_sanity_checks:
             self._check_sanity()

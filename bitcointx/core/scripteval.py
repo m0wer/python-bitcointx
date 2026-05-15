@@ -20,100 +20,98 @@ module.
 """
 
 import hashlib
-from typing import Iterable, Optional, List, Tuple, Set, Type, TypeVar, Union, Callable
+from typing import Callable, Iterable, List, Optional, Set, Tuple, Type, TypeVar, Union
 
 import bitcointx.core
 import bitcointx.core._bignum
+import bitcointx.core._ripemd160
 import bitcointx.core.key
 import bitcointx.core.serialize
-import bitcointx.core._ripemd160
-
-from bitcointx.util import ensure_isinstance
-
 from bitcointx.core.script import (
-    CScript,
-    OPCODE_NAMES,
-    SIGVERSION_BASE,
-    SIGVERSION_WITNESS_V0,
-    SIGHASH_ALL,
-    SIGHASH_SINGLE,
-    SIGHASH_ANYONECANPAY,
+    DISABLED_OPCODES,
     MAX_SCRIPT_ELEMENT_SIZE,
     MAX_SCRIPT_OPCODES,
     MAX_SCRIPT_SIZE,
-    IsLowDERSignature,
-    FindAndDelete,
-    DISABLED_OPCODES,
-    CScriptInvalidError,
-    CScriptWitness,
-    SIGVERSION_Type,
-    CScriptOp,
-    OP_CHECKMULTISIGVERIFY,
-    OP_CHECKMULTISIG,
-    OP_CHECKSIG,
-    OP_CHECKSIGVERIFY,
-    OP_1ADD,
-    OP_1SUB,
-    OP_1NEGATE,
-    OP_NEGATE,
-    OP_ABS,
-    OP_ADD,
-    OP_SUB,
-    OP_BOOLAND,
-    OP_BOOLOR,
-    OP_NOT,
     OP_0NOTEQUAL,
-    OP_EQUAL,
-    OP_EQUALVERIFY,
-    OP_NUMEQUAL,
-    OP_NUMEQUALVERIFY,
-    OP_LESSTHAN,
-    OP_LESSTHANOREQUAL,
-    OP_NUMNOTEQUAL,
-    OP_GREATERTHAN,
-    OP_GREATERTHANOREQUAL,
-    OP_MIN,
-    OP_MAX,
-    OP_PUSHDATA4,
     OP_1,
-    OP_16,
-    OP_IF,
-    OP_ENDIF,
-    OP_ELSE,
-    OP_DROP,
-    OP_DUP,
+    OP_1ADD,
+    OP_1NEGATE,
+    OP_1SUB,
     OP_2DROP,
     OP_2DUP,
     OP_2OVER,
     OP_2ROT,
     OP_2SWAP,
     OP_3DUP,
+    OP_16,
+    OP_ABS,
+    OP_ADD,
+    OP_BOOLAND,
+    OP_BOOLOR,
+    OP_CHECKMULTISIG,
+    OP_CHECKMULTISIGVERIFY,
+    OP_CHECKSIG,
+    OP_CHECKSIGVERIFY,
     OP_CODESEPARATOR,
     OP_DEPTH,
+    OP_DROP,
+    OP_DUP,
+    OP_ELSE,
+    OP_ENDIF,
+    OP_EQUAL,
+    OP_EQUALVERIFY,
     OP_FROMALTSTACK,
+    OP_GREATERTHAN,
+    OP_GREATERTHANOREQUAL,
     OP_HASH160,
     OP_HASH256,
-    OP_NOTIF,
+    OP_IF,
     OP_IFDUP,
+    OP_LESSTHAN,
+    OP_LESSTHANOREQUAL,
+    OP_MAX,
+    OP_MIN,
+    OP_NEGATE,
     OP_NIP,
     OP_NOP,
     OP_NOP1,
     OP_NOP10,
+    OP_NOT,
+    OP_NOTIF,
+    OP_NUMEQUAL,
+    OP_NUMEQUALVERIFY,
+    OP_NUMNOTEQUAL,
     OP_OVER,
     OP_PICK,
-    OP_ROLL,
+    OP_PUSHDATA4,
     OP_RETURN,
     OP_RIPEMD160,
+    OP_ROLL,
     OP_ROT,
-    OP_SIZE,
     OP_SHA1,
     OP_SHA256,
+    OP_SIZE,
+    OP_SUB,
     OP_SWAP,
     OP_TOALTSTACK,
     OP_TUCK,
     OP_VERIFY,
     OP_WITHIN,
+    OPCODE_NAMES,
+    SIGHASH_ALL,
+    SIGHASH_ANYONECANPAY,
+    SIGHASH_SINGLE,
+    SIGVERSION_BASE,
+    SIGVERSION_WITNESS_V0,
+    CScript,
+    CScriptInvalidError,
+    CScriptOp,
+    CScriptWitness,
+    FindAndDelete,
+    IsLowDERSignature,
+    SIGVERSION_Type,
 )
+from bitcointx.util import ensure_isinstance
 
 T_EvalScriptError = TypeVar("T_EvalScriptError", bound="EvalScriptError")
 
@@ -437,7 +435,6 @@ def VerifyWitnessProgram(
     amount: int = 0,
     script_class: Type[CScript] = CScript,
 ) -> None:
-
     if script_class is None:
         raise ValueError("script class must be specified")
 
@@ -481,7 +478,7 @@ def VerifyWitnessProgram(
         # Disallow stack item size > MAX_SCRIPT_ELEMENT_SIZE in witness stack
         if elt_len > MAX_SCRIPT_ELEMENT_SIZE:
             raise VerifyScriptError(
-                "maximum push size exceeded by an item at position {} on witness stack".format(i)
+                f"maximum push size exceeded by an item at position {i} on witness stack"
             )
 
     EvalScript(stack, scriptPubKey, txTo, inIdx, flags=flags, amount=amount, sigversion=sigversion)
@@ -583,7 +580,6 @@ def _CheckMultiSig(
     amount: int = 0,
     sigversion: SIGVERSION_Type = SIGVERSION_BASE,
 ) -> None:
-
     i = 1
     if len(stack) < i:
         raise MissingOpArgumentsError(get_eval_state(), expected_stack_depth=i)
@@ -1269,9 +1265,7 @@ def VerifyScript(
 
     if flags & UNHANDLED_SCRIPT_VERIFY_FLAGS:
         raise VerifyScriptError(
-            "some of the flags cannot be handled by current code: {}".format(
-                script_verify_flags_to_string(flags & UNHANDLED_SCRIPT_VERIFY_FLAGS)
-            )
+            f"some of the flags cannot be handled by current code: {script_verify_flags_to_string(flags & UNHANDLED_SCRIPT_VERIFY_FLAGS)}"
         )
 
     stack: List[bytes] = []

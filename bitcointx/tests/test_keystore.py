@@ -15,14 +15,14 @@ import unittest
 
 from bitcointx.core import x
 from bitcointx.core.key import (
-    CPubKey,
-    KeyStore,
     BIP32Path,
     BIP32PathTemplate,
-    KeyDerivationInfo,
     BIP32PathTemplateViolation,
+    CPubKey,
+    KeyDerivationInfo,
+    KeyStore,
 )
-from bitcointx.wallet import CCoinKey, CCoinExtKey, CCoinExtPubKey
+from bitcointx.wallet import CCoinExtKey, CCoinExtPubKey, CCoinKey
 
 
 class Test_KeyStore(unittest.TestCase):

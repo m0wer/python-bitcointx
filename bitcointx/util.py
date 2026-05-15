@@ -20,27 +20,27 @@ except ImportError:
 
     has_contextvars = False
 
-import hashlib
 import functools
+import hashlib
+from abc import ABC, ABCMeta, abstractmethod
 from enum import Enum
 from types import FunctionType
-from abc import ABCMeta, ABC, abstractmethod
 from typing import (
-    Type,
-    Set,
-    Tuple,
-    List,
-    Dict,
-    Union,
     Any,
     Callable,
-    Iterable,
-    Optional,
-    TypeVar,
+    Dict,
     Generic,
-    cast,
-    NoReturn,
+    Iterable,
+    List,
     Mapping,
+    NoReturn,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
 )
 
 _secp256k1_library_path: Optional[str] = None
@@ -62,16 +62,12 @@ class _NoBoolCallable:
 
     def __int__(self) -> int:
         raise TypeError(
-            "Using this attribute as integer property is disabled. please use {}()".format(
-                self.method_name
-            )
+            f"Using this attribute as integer property is disabled. please use {self.method_name}()"
         )
 
     def __bool__(self) -> int:
         raise TypeError(
-            "Using this attribute as boolean property is disabled. please use {}()".format(
-                self.method_name
-            )
+            f"Using this attribute as boolean property is disabled. please use {self.method_name}()"
         )
 
     def __call__(self) -> bool:
@@ -100,15 +96,15 @@ def get_class_dispatcher_depends(
     dclass: Type["ClassMappingDispatcher"],
 ) -> Set[Type["ClassMappingDispatcher"]]:
     """Return a set of dispatcher the supplied dispatcher class depends on"""
-    dset: Set[Type["ClassMappingDispatcher"]] = set()
+    dset: Set[Type[ClassMappingDispatcher]] = set()
 
     for dep_dclass in dclass._class_dispatcher__depends:
         dset.add(dep_dclass)
         dset |= get_class_dispatcher_depends(dep_dclass)
 
-    assert len(dset) == len(set([elt._class_dispatcher__identity for elt in dset])), (
-        "all the dispatcher in the set must have distinct identities"
-    )
+    assert len(dset) == len(
+        set([elt._class_dispatcher__identity for elt in dset])
+    ), "all the dispatcher in the set must have distinct identities"
 
     return dset
 
@@ -122,7 +118,7 @@ def activate_class_dispatcher(
         raise TypeError(f"{dclass.__name__} is not a subclass of ClassMappingDispatcher")
 
     if dclass._class_dispatcher__no_direct_use:
-        raise ValueError("{} must not be used directly".format(dclass.__name__))
+        raise ValueError(f"{dclass.__name__} must not be used directly")
 
     prev = class_mapping_dispatch_data.get_dispatcher_class(dclass._class_dispatcher__identity)
 
@@ -142,7 +138,7 @@ def dispatcher_mapped_list(
     dispatched to. Returns empty list when class is not in a dispatch map"""
     mcs = type(cls)
     if not issubclass(mcs, ClassMappingDispatcher):
-        raise ValueError("{} is not a dispatcher class".format(cls.__name__))
+        raise ValueError(f"{cls.__name__} is not a dispatcher class")
 
     dispatcher = class_mapping_dispatch_data.get_dispatcher_class(mcs._class_dispatcher__identity)
 
@@ -243,7 +239,7 @@ class ClassMappingDispatcher(ABCMeta):
 
         if identity is not None:
             if not class_mapping_dispatch_data.is_valid_identity(identity):
-                raise ValueError("identity {} is not recognized".format(identity))
+                raise ValueError(f"identity {identity} is not recognized")
             if hasattr(mcs, "_class_dispatcher__identity"):
                 raise AssertionError(
                     "can't replace identity that was already set by the base class"
@@ -254,7 +250,7 @@ class ClassMappingDispatcher(ABCMeta):
             mcs._class_dispatcher__depends = depends
             for ddisp in depends:
                 if not issubclass(ddisp, ClassMappingDispatcher):
-                    raise TypeError("{} is not a dispatcher class".format(ddisp.__name__))
+                    raise TypeError(f"{ddisp.__name__} is not a dispatcher class")
             return
 
         if not getattr(mcs, "_class_dispatcher__identity", None):
@@ -273,26 +269,22 @@ class ClassMappingDispatcher(ABCMeta):
                     if issubclass(ddisp, pdep):
                         if combined_depends[i] != pdep:
                             raise TypeError(
-                                "{} is specified in depends argument, but "
-                                "it is in conflict with {}, that also tries "
-                                "to replace {} from parent depenrs".format(
-                                    ddisp, combined_depends[i], pdep
-                                )
+                                f"{ddisp} is specified in depends argument, but "
+                                f"it is in conflict with {combined_depends[i]}, that also tries "
+                                f"to replace {pdep} from parent depenrs"
                             )
                         if replaced_index is not None:
                             raise TypeError(
-                                "{} is specified in depends argument, but "
-                                "it is a subclass of both {} and {}".format(
-                                    ddisp, parent_depends[replaced_index], pdep
-                                )
+                                f"{ddisp} is specified in depends argument, but "
+                                f"it is a subclass of both {parent_depends[replaced_index]} and {pdep}"
                             )
                         combined_depends[i] = ddisp
                         replaced_index = i
 
                 if replaced_index is None:
                     raise TypeError(
-                        "{} is specified in depends argument, but it is not "
-                        "a subclass of any dependencies of the parent of {}".format(ddisp, mcs)
+                        f"{ddisp} is specified in depends argument, but it is not "
+                        f"a subclass of any dependencies of the parent of {mcs}"
                     )
 
             mcs._class_dispatcher__depends = tuple(combined_depends)
@@ -412,20 +404,15 @@ class ClassMappingDispatcher(ABCMeta):
                 # check for correctness in regard to next_dispatch_final param
                 if next_dispatch_final:
                     raise AssertionError(
-                        "{} is marked with next_dispatch_final=True, "
-                        "but {}, also marked with next_dispatch_final=Trye, "
-                        "is mapped to it".format(bcs.__name__, cls.__name__)
+                        f"{bcs.__name__} is marked with next_dispatch_final=True, "
+                        f"but {cls.__name__}, also marked with next_dispatch_final=Trye, "
+                        "is mapped to it"
                     )
                 if len(target_list) > 0:
                     raise AssertionError(
-                        "{} is marked with next_dispatch_final=True, "
-                        "adding {} to already-mapped {} will make the mapping "
-                        "non-final. Maybe you want to set variant_of=... on {}".format(
-                            bcs.__name__,
-                            cls.__name__,
-                            [c.__name__ for c in target_list],
-                            cls.__name__,
-                        )
+                        f"{bcs.__name__} is marked with next_dispatch_final=True, "
+                        f"adding {cls.__name__} to already-mapped {[c.__name__ for c in target_list]} will make the mapping "
+                        f"non-final. Maybe you want to set variant_of=... on {cls.__name__}"
                     )
 
             # add the class to the mapping
@@ -490,7 +477,6 @@ class classgetter(Generic[T_rettype]):
 def ensure_isinstance(
     var: object, type_or_types: Union[Type[Any], Tuple[Type[Any], ...]], var_description: str
 ) -> None:
-
     if not isinstance(var, type_or_types):
         if isinstance(type_or_types, type):  # single type
             msg = (
@@ -575,9 +561,9 @@ if has_contextvars:
         _context_vars_storage__: Dict[str, "ContextVar[Any]"]
 
         def __init__(self, **kwargs: Any):
-            assert self.__class__ is not ContextVarsCompat, (
-                "ContextVarsCompat should always be subclassed"
-            )
+            assert (
+                self.__class__ is not ContextVarsCompat
+            ), "ContextVarsCompat should always be subclassed"
             vardict = {
                 name: ContextVar(name, default=default_value)
                 for name, default_value in kwargs.items()
@@ -602,9 +588,9 @@ else:
         _context_vars_defaults__: Dict[str, Any] = {}
 
         def __init__(self, **kwargs: Any):
-            assert self.__class__ is not ContextVarsCompat, (
-                "ContextVarsCompat should always be subclassed"
-            )
+            assert (
+                self.__class__ is not ContextVarsCompat
+            ), "ContextVarsCompat should always be subclassed"
             defaults = self.__class__._context_vars_defaults__
 
             if not kwargs:

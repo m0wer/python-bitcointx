@@ -11,44 +11,44 @@
 
 # pylama:ignore=E501,C901
 
-from io import BytesIO
-import unittest
 import base64
-from typing import Set
+import unittest
 from collections import OrderedDict
+from io import BytesIO
+from typing import Set
 
 from bitcointx import ChainParams
-from bitcointx.wallet import CCoinExtKey, CCoinExtPubKey, P2PKHCoinAddress
 from bitcointx.core import (
-    x,
-    lx,
-    b2x,
-    CTransaction,
-    CTxOut,
     CMutableTxOut,
-    CTxIn,
-    COutPoint,
-    coins_to_satoshi,
     CoreCoinParams,
+    COutPoint,
+    CTransaction,
+    CTxIn,
+    CTxOut,
+    b2x,
+    coins_to_satoshi,
+    lx,
+    x,
 )
-from bitcointx.core.key import CPubKey, KeyStore, BIP32Path
-from bitcointx.core.script import (
-    SIGHASH_ALL,
-    CScript,
-    OP_CHECKMULTISIG,
-    parse_standard_multisig_redeem_script,
-    standard_witness_v0_scriptpubkey,
-    CScriptWitness,
-)
-from bitcointx.core.serialize import SerializationError, SerializationTruncationError, ser_read
+from bitcointx.core.key import BIP32Path, CPubKey, KeyStore
 from bitcointx.core.psbt import (
     PartiallySignedTransaction,
+    PSBT_GlobalKeyType,
+    PSBT_InKeyType,
     PSBT_KeyDerivationInfo,
     PSBT_ProprietaryTypeData,
     read_psbt_keymap,
-    PSBT_GlobalKeyType,
-    PSBT_InKeyType,
 )
+from bitcointx.core.script import (
+    OP_CHECKMULTISIG,
+    SIGHASH_ALL,
+    CScript,
+    CScriptWitness,
+    parse_standard_multisig_redeem_script,
+    standard_witness_v0_scriptpubkey,
+)
+from bitcointx.core.serialize import SerializationError, SerializationTruncationError, ser_read
+from bitcointx.wallet import CCoinExtKey, CCoinExtPubKey, P2PKHCoinAddress
 
 
 class Test_PSBT(unittest.TestCase):

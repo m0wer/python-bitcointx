@@ -9,19 +9,18 @@
 # propagated, or distributed except according to the terms contained in the
 # LICENSE file.
 
+import json
+import os
 import unittest
-
-from typing import Iterator, Dict, Any
+from typing import Any, Dict, Iterator
 
 from bitcointx.core.secp256k1 import get_secp256k1
+from bitcointx.signmessage import BitcoinMessage, SignMessage, VerifyMessage
 from bitcointx.wallet import CBitcoinKey, P2PKHCoinAddress
-from bitcointx.signmessage import BitcoinMessage, VerifyMessage, SignMessage
-import os
-import json
 
 
 def load_test_vectors(name: str) -> Iterator[Dict[str, Any]]:
-    with open(os.path.dirname(__file__) + "/data/" + name, "r") as fd:
+    with open(os.path.dirname(__file__) + "/data/" + name) as fd:
         for testcase in json.load(fd):
             yield testcase
 
@@ -59,7 +58,6 @@ class Test_SignVerifyMessage(unittest.TestCase):
         "secp256k1 compiled without pubkey recovery functions",
     )
     def test_sign_message_simple(self) -> None:
-
         key = CBitcoinKey("L4vB5fomsK8L95wQ7GFzvErYGht49JsCPJyJMHpB4xGM6xgi2jvG")
         address = P2PKHCoinAddress("1F26pNMrywyZJdr22jErtKcjF8R3Ttt55G")
         message = str(address)

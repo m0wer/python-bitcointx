@@ -16,9 +16,9 @@
 """Base58 encoding and decoding"""
 
 import binascii
-import bitcointx.core
+from typing import List, Type, TypeVar
 
-from typing import TypeVar, Type, List
+import bitcointx.core
 
 B58_DIGITS = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
@@ -167,11 +167,7 @@ class CBase58Data(bytes):
 
         if len(candidates) == 1:
             raise UnexpectedBase58PrefixError(
-                "Incorrect prefix bytes for {}: {}, expected {}".format(
-                    cls.__name__,
-                    bitcointx.core.b2x(data[: len(pfx)]),
-                    bitcointx.core.b2x(cls.base58_prefix),
-                )
+                f"Incorrect prefix bytes for {cls.__name__}: {bitcointx.core.b2x(data[: len(pfx)])}, expected {bitcointx.core.b2x(cls.base58_prefix)}"
             )
 
         raise UnexpectedBase58PrefixError(

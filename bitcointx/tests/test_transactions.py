@@ -12,41 +12,39 @@
 # pylama:ignore=E501
 
 import json
-import unittest
 import os
-
-from typing import Iterator, Tuple, Dict
+import unittest
+from typing import Dict, Iterator, Tuple
 
 from bitcointx.core import (
-    x,
-    lx,
-    b2x,
-    CTransaction,
-    CMutableTransaction,
-    COutPoint,
-    CMutableOutPoint,
-    CTxIn,
-    CTxOut,
-    CMutableTxIn,
-    CMutableTxOut,
-    CTxWitness,
-    CTxInWitness,
-    CMutableTxWitness,
-    CMutableTxInWitness,
     CheckTransaction,
     CheckTransactionError,
+    CMutableOutPoint,
+    CMutableTransaction,
+    CMutableTxIn,
+    CMutableTxInWitness,
+    CMutableTxOut,
+    CMutableTxWitness,
+    COutPoint,
+    CTransaction,
+    CTxIn,
+    CTxInWitness,
+    CTxOut,
+    CTxWitness,
     ValidationError,
+    b2x,
+    lx,
+    x,
 )
 from bitcointx.core.script import CScript, CScriptWitness
-from bitcointx.core.scripteval import VerifyScript, SCRIPT_VERIFY_P2SH
-
+from bitcointx.core.scripteval import SCRIPT_VERIFY_P2SH, VerifyScript
 from bitcointx.tests.test_scripteval import parse_script
 
 
 def load_test_vectors(
     name: str,
 ) -> Iterator[Tuple[Dict[COutPoint, CScript], CTransaction, bytes, bool]]:
-    with open(os.path.dirname(__file__) + "/data/" + name, "r") as fd:
+    with open(os.path.dirname(__file__) + "/data/" + name) as fd:
         for test_case in json.load(fd):
             # Comments designated by single length strings
             if len(test_case) == 1:

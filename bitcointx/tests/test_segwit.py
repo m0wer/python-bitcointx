@@ -13,18 +13,17 @@
 
 import unittest
 
-from bitcointx.core import x, coins_to_satoshi, CTransaction
+from bitcointx.core import CTransaction, coins_to_satoshi, x
 from bitcointx.core.script import (
-    CScript,
-    SignatureHash,
     SIGHASH_ALL,
-    SIGVERSION_WITNESS_V0,
-    SIGHASH_SINGLE,
     SIGHASH_ANYONECANPAY,
     SIGHASH_NONE,
+    SIGHASH_SINGLE,
+    SIGVERSION_WITNESS_V0,
+    CScript,
+    SignatureHash,
 )
 from bitcointx.wallet import CBech32BitcoinAddress, CCoinAddress
-
 
 # Test serialization
 

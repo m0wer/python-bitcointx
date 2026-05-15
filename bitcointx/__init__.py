@@ -12,12 +12,11 @@
 
 import os
 import platform
-
 import types
 from abc import ABCMeta
-from contextlib import contextmanager
 from collections import OrderedDict
-from typing import Dict, List, Tuple, Union, Optional, Type, Any, Generator, cast, TypeVar, Callable
+from contextlib import contextmanager
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Type, TypeVar, Union, cast
 
 import bitcointx.util
 
@@ -56,9 +55,7 @@ class ChainParamsMeta(ABCMeta):
         if len(bases):
             assert cls._common_base_cls is not None
             if not any(issubclass(b, cls._common_base_cls) for b in bases):
-                raise TypeError(
-                    "{} must be a subclass of {}".format(cls_name, cls._common_base_cls.__name__)
-                )
+                raise TypeError(f"{cls_name} must be a subclass of {cls._common_base_cls.__name__}")
 
             if name is None:
                 if "NAME" in dct and not isinstance(dct["NAME"], str):
@@ -77,10 +74,8 @@ class ChainParamsMeta(ABCMeta):
                 for name in names:
                     if name in cls._registered_classes:
                         raise AssertionError(
-                            "name {} is not allowed to be registered twice, "
-                            "it was already registered by {} before".format(
-                                name, cls._registered_classes[name].__name__
-                            )
+                            f"name {name} is not allowed to be registered twice, "
+                            f"it was already registered by {cls._registered_classes[name].__name__} before"
                         )
                     cls._registered_classes[name] = cls_instance
 
@@ -88,9 +83,7 @@ class ChainParamsMeta(ABCMeta):
         else:
             if cls._common_base_cls:
                 raise TypeError(
-                    "{} cannot be used with more than one class, {} was here first".format(
-                        cls.__name__, cls._common_base_cls
-                    )
+                    f"{cls.__name__} cannot be used with more than one class, {cls._common_base_cls} was here first"
                 )
             cls._common_base_cls = cls_instance
 
@@ -132,16 +125,16 @@ class ChainParamsBase(metaclass=ChainParamsMeta):
         name = self.NAME.split("/")[0]
 
         if platform.system() == "Darwin":
-            return os.path.expanduser("~/Library/Application Support/{}".format(name.capitalize()))
+            return os.path.expanduser(f"~/Library/Application Support/{name.capitalize()}")
         elif platform.system() == "Windows":
             return os.path.join(os.environ["APPDATA"], name.capitalize())
 
-        return os.path.expanduser("~/.{}".format(name))
+        return os.path.expanduser(f"~/.{name}")
 
     def get_config_path(self) -> str:
         """Return default location for config file"""
         name = self.NAME.split("/")[0]
-        return "{}/{}.conf".format(self.get_confdir_path(), name)
+        return f"{self.get_confdir_path()}/{name}.conf"
 
     def get_datadir_extra_name(self) -> str:
         """Return appropriate dir name to find data for the chain,
@@ -285,8 +278,8 @@ def select_chain_params(
     prev_params = _chain_params_context.params
     _chain_params_context.params = params
 
-    import bitcointx.wallet
     import bitcointx.core.psbt
+    import bitcointx.wallet
 
     for disp_name in ("WALLET", "PSBT"):
         disp = getattr(params, f"{disp_name}_DISPATCHER", None)

@@ -19,43 +19,43 @@ WARNING: This module does not mlock() secrets; your private keys may end up on
 disk in swap! Use with caution!
 """
 
-import hmac
-import struct
 import ctypes
 import ctypes.util
 import hashlib
+import hmac
+import struct
 import warnings
 from abc import abstractmethod
 from typing import (
-    TypeVar,
-    Type,
-    Union,
-    Tuple,
-    List,
-    Sequence,
-    Optional,
-    Iterator,
-    cast,
-    Dict,
     Any,
-    Iterable,
     Callable,
-    Generic,
     ClassVar,
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
 )
 
 import bitcointx.core
-from bitcointx.util import no_bool_use_as_property, ensure_isinstance
+from bitcointx.core.ecdasig_parse_der_lax import ecdsa_signature_parse_der_lax
 from bitcointx.core.secp256k1 import (
-    get_secp256k1,
-    SIGNATURE_SIZE,
     COMPACT_SIGNATURE_SIZE,
-    PUBLIC_KEY_SIZE,
     COMPRESSED_PUBLIC_KEY_SIZE,
+    PUBLIC_KEY_SIZE,
     SECP256K1_EC_COMPRESSED,
     SECP256K1_EC_UNCOMPRESSED,
+    SIGNATURE_SIZE,
+    get_secp256k1,
 )
-from bitcointx.core.ecdasig_parse_der_lax import ecdsa_signature_parse_der_lax
+from bitcointx.util import ensure_isinstance, no_bool_use_as_property
 
 BIP32_HARDENED_KEY_OFFSET = 0x80000000
 
@@ -158,7 +158,6 @@ class CKeyBase:
         _ecdsa_sig_grind_low_r: bool = True,
         _ecdsa_sig_extra_entropy: int = 0,
     ) -> bytes:
-
         ensure_isinstance(hash, (bytes, bytearray), "hash")
         if len(hash) != 32:
             raise ValueError("Hash must be exactly 32 bytes long")
@@ -935,7 +934,6 @@ class CExtKeyBase(CExtKeyCommonBase):
         raise NotImplementedError
 
     def __init__(self, _b: Optional[bytes]) -> None:
-
         self._check_length()
         self._check_depth()
 
@@ -1053,7 +1051,6 @@ class CExtPubKeyBase(CExtKeyCommonBase):
     """
 
     def __init__(self, _b: Optional[bytes]) -> None:
-
         self._check_length()
 
         self._pub = CPubKey(self.key_bytes)
@@ -1366,7 +1363,6 @@ class BIP32PathGeneric(Generic[T_BIP32PathIndex]):
 class BIP32Path(BIP32PathGeneric[int]):
     @classmethod
     def _index_from_str(cls, s: str, *, is_hardened: bool) -> int:
-
         if not s.isdigit():
             if any(ch.isspace() for ch in s):
                 raise ValueError("whitespace found in BIP32 index")
@@ -1464,7 +1460,6 @@ class BIP32PathTemplate(BIP32PathGeneric[BIP32PathTemplateIndex]):
         *,
         is_hardened: bool,  # noqa
     ) -> BIP32PathTemplateIndex:
-
         if any(ch.isspace() for ch in index_str):
             raise ValueError("whitespace found in index template")
 
@@ -1774,7 +1769,6 @@ class KeyStore:
         return kstore
 
     def add_key(self, k: T_KeyStoreKeyArg) -> None:  # noqa
-
         path_templates = []
         if isinstance(k, tuple):
             k, pts = k
@@ -1904,7 +1898,6 @@ class KeyStore:
         full_path_indexes: Optional[Tuple[int, ...]] = None,
         partial_path_indexes: Optional[Tuple[int, ...]] = None,
     ) -> None:
-
         if not path_templates:
             if self._require_path_templates:
                 raise AssertionError(
@@ -2069,7 +2062,6 @@ class XOnlyPubKey(bytes):
     __fullyvalid: bool
 
     def __new__(cls: Type[T_XOnlyPubKey], keydata: Union[bytes, CPubKey] = b"") -> T_XOnlyPubKey:
-
         secp256k1 = get_secp256k1()
         if not secp256k1.cap.has_xonly_pubkeys:
             raise RuntimeError(_module_unavailable_error("x-only pubkey", "extrakeys"))
@@ -2174,7 +2166,6 @@ def compute_tap_tweak_hash(pub: XOnlyPubKey, *, merkle_root: bytes = b"") -> byt
 def check_tap_tweak(
     tweaked_pub: XOnlyPubKey, internal_pub: XOnlyPubKey, *, merkle_root: bytes = b"", parity: bool
 ) -> bool:
-
     if not tweaked_pub.is_fullyvalid():
         raise ValueError("supplied tweaked_pub must be valid")
 
@@ -2209,7 +2200,6 @@ def tap_tweak_pubkey(
     *,
     merkle_root: bytes = b"",
 ) -> Optional[Tuple[XOnlyPubKey, bool]]:
-
     if not pub.is_fullyvalid():
         raise ValueError("pubkey must be valid")
 

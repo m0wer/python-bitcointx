@@ -8,5 +8,3 @@
 # No part of python-bitcointx, including this file, may be copied, modified,
 # propagated, or distributed except according to the terms contained in the
 # LICENSE file.
-
-from __future__ import absolute_import, division, print_function, unicode_literals

@@ -14,16 +14,14 @@
 import json
 import os
 import unittest
-
+from binascii import unhexlify
 from typing import Iterator, Tuple
 
-from binascii import unhexlify
-
-from bitcointx.base58 import CBase58Data, encode, decode, Base58Error
+from bitcointx.base58 import Base58Error, CBase58Data, decode, encode
 
 
 def load_test_vectors(name: str) -> Iterator[Tuple[str, str]]:
-    with open(os.path.dirname(__file__) + "/data/" + name, "r") as fd:
+    with open(os.path.dirname(__file__) + "/data/" + name) as fd:
         for testcase in json.load(fd):
             yield testcase
 

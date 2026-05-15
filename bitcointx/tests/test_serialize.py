@@ -9,24 +9,22 @@
 # propagated, or distributed except according to the terms contained in the
 # LICENSE file.
 
-import unittest
 import random
-
+import unittest
 from binascii import unhexlify
-
 from typing import Any
 
 from bitcointx.core.serialize import (
-    Serializable,
-    VarIntSerializer,
     BytesSerializer,
-    SerializationError,
-    SerializationTruncationError,
+    ByteStream_Type,
     DeserializationExtraDataError,
     DeserializationValueBoundsError,
+    Serializable,
+    SerializationError,
+    SerializationTruncationError,
+    VarIntSerializer,
     uint256_from_bytes,
     uint256_to_bytes,
-    ByteStream_Type,
 )
 
 

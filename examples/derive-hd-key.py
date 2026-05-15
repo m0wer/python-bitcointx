@@ -13,12 +13,13 @@
 
 import os
 import sys
+from typing import Union
+
 from bitcointx import select_chain_params
+from bitcointx.base58 import Base58Error, UnexpectedBase58PrefixError
 from bitcointx.core import b2x
 from bitcointx.core.key import BIP32Path
-from bitcointx.base58 import Base58Error, UnexpectedBase58PrefixError
 from bitcointx.wallet import CCoinExtKey, CCoinExtPubKey
-from typing import Union
 
 if __name__ == "__main__":
     xkey: Union[CCoinExtKey, CCoinExtPubKey]
@@ -61,7 +62,7 @@ if __name__ == "__main__":
             print("ERROR: specified key does not appear to be valid")
             sys.exit(-1)
     else:
-        print("usage: {} [-r|-t] <derivation_path> [xpriv_or_xpub]".format(sys.argv[0]))
+        print(f"usage: {sys.argv[0]} [-r|-t] <derivation_path> [xpriv_or_xpub]")
         sys.exit(-1)
 
     path_str = sys.argv[1]
@@ -76,7 +77,7 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     for n in path:
-        print("child number: 0x{:08x}".format(n))
+        print(f"child number: 0x{n:08x}")
         xkey = xkey.derive(n)
         if isinstance(xkey, CCoinExtKey):
             print("xpriv:", xkey)

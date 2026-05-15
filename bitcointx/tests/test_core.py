@@ -16,16 +16,16 @@ import unittest
 
 from bitcointx import BitcoinMainnetParams, ChainParams
 from bitcointx.core import (
-    str_money_value,
+    CoreBitcoinClass,
+    CoreBitcoinClassDispatcher,
+    CoreBitcoinParams,
     MoneyRange,
     coins_to_satoshi,
     satoshi_to_coins,
-    CoreBitcoinParams,
-    CoreBitcoinClassDispatcher,
-    CoreBitcoinClass,
+    str_money_value,
 )
-from bitcointx.wallet import WalletBitcoinClassDispatcher
 from bitcointx.util import classgetter
+from bitcointx.wallet import WalletBitcoinClassDispatcher
 
 
 class Test_str_value(unittest.TestCase):
@@ -65,7 +65,6 @@ class Test_Money(unittest.TestCase):
             satoshi_to_coins(max_satoshi + 1)
 
     def test_MoneyRangeCustomParams(self) -> None:
-
         class CoreHighMaxClassDispatcher(CoreBitcoinClassDispatcher): ...
 
         class CoreHighMaxClass(CoreBitcoinClass, metaclass=CoreHighMaxClassDispatcher): ...

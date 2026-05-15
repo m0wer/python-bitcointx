@@ -9,13 +9,13 @@
 # propagated, or distributed except according to the terms contained in the
 # LICENSE file.
 
-from typing import TypeVar, Type, Union, Any
-
-from bitcointx.core.key import CPubKey, CKeyBase
-from bitcointx.core.serialize import ImmutableSerializable, ByteStream_Type
-from bitcointx.wallet import P2PKHCoinAddress
-import bitcointx
 import base64
+from typing import Any, Type, TypeVar, Union
+
+import bitcointx
+from bitcointx.core.key import CKeyBase, CPubKey
+from bitcointx.core.serialize import ByteStream_Type, ImmutableSerializable
+from bitcointx.wallet import P2PKHCoinAddress
 
 # pylama:ignore=E501
 
@@ -26,7 +26,6 @@ def VerifyMessage(
     sig: Union[str, bytes],
     validate_base64: bool = True,
 ) -> bool:
-
     if isinstance(sig, bytes):
         sig_b64 = sig.decode("ascii")
     else:

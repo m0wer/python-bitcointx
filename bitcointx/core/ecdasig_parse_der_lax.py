@@ -25,10 +25,9 @@
 # violations present in the blockchain before that point.
 
 import ctypes
-
 from typing import Optional
 
-from bitcointx.core.secp256k1 import get_secp256k1, COMPACT_SIGNATURE_SIZE
+from bitcointx.core.secp256k1 import COMPACT_SIGNATURE_SIZE, get_secp256k1
 
 
 def ecdsa_signature_parse_der_lax(laxinput: bytes) -> Optional[bytes]:  # noqa

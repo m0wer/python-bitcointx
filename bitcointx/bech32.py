@@ -11,12 +11,11 @@
 
 """Bech32 encoding and decoding"""
 
-from typing import TypeVar, Type, List, Optional, cast
+from typing import List, Optional, Type, TypeVar, cast
 
 import bitcointx
 import bitcointx.core
-from bitcointx.segwit_addr import encode, decode
-
+from bitcointx.segwit_addr import decode, encode
 
 T_CBech32Data = TypeVar("T_CBech32Data", bound="CBech32Data")
 T_unbounded = TypeVar("T_unbounded")

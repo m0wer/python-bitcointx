@@ -13,17 +13,16 @@
 
 import os
 import unittest
+from typing import Any, List, Union
 
-from typing import List, Any, Union
-
-from bitcointx.core import x, b2x, CTxOut, CTxIn, CTransaction, COutPoint
+from bitcointx.core import COutPoint, CTransaction, CTxIn, CTxOut, b2x, x
 from bitcointx.core.key import CKey
 from bitcointx.core.script import (
-    CScript,
-    CScriptOp,
-    CScriptInvalidError,
+    DATA,
+    NUMBER,
     OP_0,
     OP_1,
+    OP_1NEGATE,
     OP_2,
     OP_3,
     OP_4,
@@ -39,22 +38,22 @@ from bitcointx.core.script import (
     OP_14,
     OP_15,
     OP_16,
-    OP_CHECKSIG,
-    OP_1NEGATE,
-    OP_BOOLOR,
     OP_BOOLAND,
-    OP_INVALIDOPCODE,
+    OP_BOOLOR,
     OP_CHECKMULTISIG,
+    OP_CHECKSIG,
     OP_DROP,
-    DATA,
-    NUMBER,
+    OP_INVALIDOPCODE,
     OPCODE,
     SIGHASH_ALL,
     SIGVERSION_BASE,
     SIGVERSION_WITNESS_V0,
+    CScript,
+    CScriptInvalidError,
+    CScriptOp,
     IsLowDERSignature,
-    parse_standard_multisig_redeem_script,
     StandardMultisigScriptInfo,
+    parse_standard_multisig_redeem_script,
 )
 from bitcointx.wallet import P2PKHCoinAddress, P2WPKHCoinAddress
 

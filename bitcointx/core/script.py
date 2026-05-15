@@ -18,39 +18,38 @@ Functionality to build scripts, as well as SignatureHash(). Script evaluation
 is in bitcointx.core.scripteval
 """
 
-import struct
 import hashlib
-from io import BytesIO
+import struct
 from abc import abstractmethod
+from io import BytesIO
 from typing import (
-    List,
-    Tuple,
-    Dict,
-    Union,
-    Iterable,
-    Sequence,
-    Optional,
-    TypeVar,
-    Type,
-    Generator,
-    Iterator,
     Any,
     Callable,
+    Dict,
+    Generator,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
     cast,
 )
 
 import bitcointx.core
-import bitcointx.core.key
 import bitcointx.core._bignum
-
-from .serialize import VarIntSerializer, BytesSerializer, ImmutableSerializable, ByteStream_Type
+import bitcointx.core.key
 
 from ..util import (
-    no_bool_use_as_property,
     ClassMappingDispatcher,
     activate_class_dispatcher,
     ensure_isinstance,
+    no_bool_use_as_property,
 )
+from .serialize import BytesSerializer, ByteStream_Type, ImmutableSerializable, VarIntSerializer
 
 _conventional_leaf_versions = tuple(range(0xC0, 0x100, 2)) + (
     0x66,
@@ -115,7 +114,7 @@ class SIGHASH_Type(int):
 
     def __init__(self, _value: int) -> None:
         super().__init__()
-        if not (self & ~self._known_bitflags) in self._known_values:
+        if (self & ~self._known_bitflags) not in self._known_values:
             raise ValueError(
                 f"a supported SIGHASH type value must be supplied, but "
                 f"{self} is not a supported SIGHASH type"
@@ -758,9 +757,7 @@ class CScript(bytes, ScriptCoinClass, next_dispatch_final=True):
         elif isinstance(other, (bytes, bytearray)):
             other = CScriptOp.encode_op_pushdata(other)
         else:
-            raise TypeError(
-                "type '{}' cannot be represented in the script".format(type(other).__name__)
-            )
+            raise TypeError(f"type '{type(other).__name__}' cannot be represented in the script")
         return other
 
     # types are deliberately incomppatible with bytes.__add__,
@@ -788,7 +785,6 @@ class CScript(bytes, ScriptCoinClass, next_dispatch_final=True):
         *,
         name: Optional[str] = None,
     ) -> T_CScript:
-
         if isinstance(value, (bytes, bytearray)):
             instance = super().__new__(cls, value)
         else:
@@ -1215,7 +1211,6 @@ class CScript(bytes, ScriptCoinClass, next_dispatch_final=True):
         codeseparator_pos: int = -1,
         annex_hash: Optional[bytes] = None,
     ) -> bytes:
-
         # Only BIP342 tapscript signing is supported for now.
         leaf_version = bitcointx.core.CoreCoinParams.TAPROOT_LEAF_TAPSCRIPT
         tapleaf_hash = bitcointx.core.CoreCoinParams.tapleaf_hasher(
@@ -1422,7 +1417,7 @@ def RawBitcoinSignatureHash(
         hashOutputs = b"\x00" * 32
 
         if not (hashtype & SIGHASH_ANYONECANPAY):
-            serialize_prevouts = bytes()
+            serialize_prevouts = b""
             for vin in txTo.vin:
                 serialize_prevouts += vin.prevout.serialize()
             hashPrevouts = bitcointx.core.Hash(serialize_prevouts)
@@ -1432,13 +1427,13 @@ def RawBitcoinSignatureHash(
             and (hashtype & 0x1F) != SIGHASH_SINGLE
             and (hashtype & 0x1F) != SIGHASH_NONE
         ):
-            serialize_sequence = bytes()
+            serialize_sequence = b""
             for vin in txTo.vin:
                 serialize_sequence += struct.pack("<I", vin.nSequence)
             hashSequence = bitcointx.core.Hash(serialize_sequence)
 
         if (hashtype & 0x1F) != SIGHASH_SINGLE and (hashtype & 0x1F) != SIGHASH_NONE:
-            serialize_outputs = bytes()
+            serialize_outputs = b""
             for vout in txTo.vout:
                 serialize_outputs += vout.serialize()
             hashOutputs = bitcointx.core.Hash(serialize_outputs)
@@ -1713,9 +1708,7 @@ def parse_standard_multisig_redeem_script(script: CScript) -> StandardMultisigSc
     if required < 1:
         raise ValueError("required number of signatures are less than 1")
     if required > MAX_P2SH_MULTISIG_PUBKEYS:
-        raise ValueError(
-            "required number of signatures are more than {}".format(MAX_P2SH_MULTISIG_PUBKEYS)
-        )
+        raise ValueError(f"required number of signatures are more than {MAX_P2SH_MULTISIG_PUBKEYS}")
     total = None
     pubkeys: List[bitcointx.core.key.CPubKey] = []
     for i in range(MAX_P2SH_MULTISIG_PUBKEYS + 1):  # +1 for `total`
@@ -1731,15 +1724,11 @@ def parse_standard_multisig_redeem_script(script: CScript) -> StandardMultisigSc
             pubkeys.append(pub)
         except StopIteration:
             raise ValueError(
-                "script is too short for specified number of required signatures ({})".format(
-                    required
-                )
+                f"script is too short for specified number of required signatures ({required})"
             )
 
     if total is None:
-        raise ValueError(
-            "script appears to contain more than {} pubkeys".format(MAX_P2SH_MULTISIG_PUBKEYS)
-        )
+        raise ValueError(f"script appears to contain more than {MAX_P2SH_MULTISIG_PUBKEYS} pubkeys")
 
     if total != len(pubkeys):
         raise ValueError(
@@ -1748,9 +1737,7 @@ def parse_standard_multisig_redeem_script(script: CScript) -> StandardMultisigSc
     if total < 2:
         raise ValueError("total number of pubkeys are less than 2")
     if total > MAX_P2SH_MULTISIG_PUBKEYS:
-        raise ValueError(
-            "required number of pubkeys are more than {}".format(MAX_P2SH_MULTISIG_PUBKEYS)
-        )
+        raise ValueError(f"required number of pubkeys are more than {MAX_P2SH_MULTISIG_PUBKEYS}")
     try:
         last_op = next(si)
     except StopIteration:
@@ -1774,7 +1761,6 @@ def parse_standard_multisig_redeem_script(script: CScript) -> StandardMultisigSc
 def standard_multisig_witness_stack(
     sigs: List[Union[bytes, bytearray]], redeem_script: CScript
 ) -> List[ScriptElement_Type]:
-
     # check that standard multisig script is valid
     info = parse_standard_multisig_redeem_script(redeem_script)
 
@@ -1783,15 +1769,15 @@ def standard_multisig_witness_stack(
 
     if len(sigs) > info.total:
         raise ValueError(
-            "number of signatures ({}) is greater than "
-            "total pubkeys ({}) in the redeem script".format(len(sigs), info.total)
+            f"number of signatures ({len(sigs)}) is greater than "
+            f"total pubkeys ({info.total}) in the redeem script"
         )
 
     if len(sigs) != info.required:
         raise ValueError(
-            "number of signatures ({}) does not match "
-            "the number of required pubkeys ({}) "
-            "in the redeem script".format(len(sigs), info.required)
+            f"number of signatures ({len(sigs)}) does not match "
+            f"the number of required pubkeys ({info.required}) "
+            "in the redeem script"
         )
 
     stack: List[ScriptElement_Type]
@@ -1930,7 +1916,7 @@ class ComplexScriptSignatureHelper:
                 if self.collect_sig(pub, sig):
                     break
 
-        new_sigs: Dict["bitcointx.core.key.CPubKey", bytes] = {}
+        new_sigs: Dict[bitcointx.core.key.CPubKey, bytes] = {}
         if self.is_enough_signatures():
             return new_sigs, True
 
@@ -1976,7 +1962,6 @@ class StandardMultisigSignatureHelper(ComplexScriptSignatureHelper):
         return standard_multisig_witness_stack(sigs, self._script)
 
     def collect_sig(self, pub: "bitcointx.core.key.CPubKey", sig: Union[bytes, bytearray]) -> bool:
-
         for index, s_pub in enumerate(self._script_info.pubkeys):
             if pub == s_pub:
                 break
@@ -2200,7 +2185,6 @@ class TaprootScriptTree(ScriptCoinClass, next_dispatch_final=True):
     def _traverse(
         self, leaves: Sequence[TaprootScriptTreeLeaf_Type]
     ) -> Tuple[bytes, Callable[[Tuple[bytes, ...]], List[Tuple[bytes, ...]]]]:
-
         if len(leaves) == 1:
             leaf = leaves[0]
             if isinstance(leaf, CScript):

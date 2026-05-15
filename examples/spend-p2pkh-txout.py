@@ -18,18 +18,18 @@ import hashlib
 
 from bitcointx import select_chain_params
 from bitcointx.core import (
-    b2x,
-    lx,
-    COutPoint,
-    CMutableTxOut,
-    CMutableTxIn,
     CMutableTransaction,
+    CMutableTxIn,
+    CMutableTxOut,
     CoreCoinParams,
+    COutPoint,
+    b2x,
     coins_to_satoshi,
+    lx,
 )
-from bitcointx.core.script import CScript, SignatureHash, SIGHASH_ALL
+from bitcointx.core.script import SIGHASH_ALL, CScript, SignatureHash
 from bitcointx.core.scripteval import VerifyScript
-from bitcointx.wallet import CBitcoinAddress, P2PKHBitcoinAddress, CBitcoinKey
+from bitcointx.wallet import CBitcoinAddress, CBitcoinKey, P2PKHBitcoinAddress
 
 select_chain_params("bitcoin")
 

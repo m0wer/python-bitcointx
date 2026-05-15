@@ -14,18 +14,16 @@
 import json
 import os
 import unittest
-
+from binascii import unhexlify
 from typing import Iterator, Tuple
 
-from binascii import unhexlify
-
-from bitcointx.core.script import CScript, OP_0, OP_1, OP_16
-from bitcointx.bech32 import CBech32Data, Bech32Error
-from bitcointx.segwit_addr import encode, decode
+from bitcointx.bech32 import Bech32Error, CBech32Data
+from bitcointx.core.script import OP_0, OP_1, OP_16, CScript
+from bitcointx.segwit_addr import decode, encode
 
 
 def load_test_vectors(name: str) -> Iterator[Tuple[str, str]]:
-    with open(os.path.dirname(__file__) + "/data/" + name, "r") as fd:
+    with open(os.path.dirname(__file__) + "/data/" + name) as fd:
         for testcase in json.load(fd):
             yield testcase
 
@@ -93,7 +91,6 @@ class Test_CBech32Data(unittest.TestCase):
         self.assertEqual(witver, 16)
 
     def test_invalid_bech32_exception(self) -> None:
-
         for testdata in load_test_vectors("bech32_invalid.json"):
             assert len(testdata) in (2, 3)
             if len(testdata) == 3:

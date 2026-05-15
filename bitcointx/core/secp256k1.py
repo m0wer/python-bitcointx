@@ -22,15 +22,14 @@
 # python's byte instance is supposed to be immutable, and for mutable byte
 # buffers you should use ctypes.create_string_buffer().
 
-import os
 import ctypes
 import ctypes.util
-from types import FunctionType
-from typing import Dict, Union, Any, Optional, cast
+import os
 from dataclasses import dataclass
+from types import FunctionType
+from typing import Any, Dict, Optional, Union, cast
 
 import bitcointx.util
-
 
 PUBLIC_KEY_SIZE = 65
 COMPRESSED_PUBLIC_KEY_SIZE = 33
@@ -62,7 +61,7 @@ class Secp256k1LastErrorContextVar(bitcointx.util.ContextVarsCompat):
 
 _secp256k1_error_storage = Secp256k1LastErrorContextVar(last_error=None)
 
-_ctypes_functype = getattr(ctypes, "WINFUNCTYPE", getattr(ctypes, "CFUNCTYPE"))
+_ctypes_functype = getattr(ctypes, "WINFUNCTYPE", ctypes.CFUNCTYPE)
 
 
 class secp256k1_context_type:
@@ -472,7 +471,7 @@ def secp256k1_load_library(path: Optional[str] = None) -> Secp256k1:
     try:
         handle = ctypes.cdll.LoadLibrary(path)
     except Exception as e:
-        raise ImportError("Cannot load secp256k1 library: {}".format(e))
+        raise ImportError(f"Cannot load secp256k1 library: {e}")
 
     cap = _add_function_definitions(handle)
     ctx = Secp256k1_Contexts(

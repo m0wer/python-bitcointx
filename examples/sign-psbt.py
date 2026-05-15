@@ -11,16 +11,16 @@
 # propagated, or distributed except according to the terms contained in the
 # LICENSE file.
 
-import sys
 import argparse
+import sys
 from typing import Optional, Union
 
 from bitcointx import select_chain_params
-from bitcointx.core import x, b2x
-from bitcointx.core.key import KeyStore, BIP32PathTemplate
-from bitcointx.core.psbt import PartiallySignedTransaction
 from bitcointx.base58 import Base58Error
-from bitcointx.wallet import CCoinKey, CCoinExtKey
+from bitcointx.core import b2x, x
+from bitcointx.core.key import BIP32PathTemplate, KeyStore
+from bitcointx.core.psbt import PartiallySignedTransaction
+from bitcointx.wallet import CCoinExtKey, CCoinKey
 
 
 def parser() -> "argparse.ArgumentParser":
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     if args.input_file == "-":
         psbt_data = sys.stdin.read()
     else:
-        with open(args.input_file, "r") as f:
+        with open(args.input_file) as f:
             psbt_data = f.read()
 
     path_template = None

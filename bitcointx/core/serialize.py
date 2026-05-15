@@ -19,11 +19,11 @@ You probabably don't need to use these directly.
 
 import hashlib
 import struct
-from typing import List, Tuple, Sequence, Union, TypeVar, Type, Generic, Any, Optional, cast
+from io import BytesIO
+from typing import Any, Generic, List, Optional, Sequence, Tuple, Type, TypeVar, Union, cast
+
 from ..util import ensure_isinstance
 from ._ripemd160 import ripemd160
-
-from io import BytesIO
 
 # Using IOBase here is not possible, because it does not define read(),
 # for example. And RawIOBase and BufferedIOBase are distinct, and thus
@@ -115,7 +115,7 @@ def ser_read(f: ByteStream_Type, n: int) -> bytes:
 T_Serializable = TypeVar("T_Serializable", bound="Serializable")
 
 
-class Serializable(object):
+class Serializable:
     """Base class for serializable objects"""
 
     __slots__: List[str] = []

@@ -13,12 +13,11 @@
 # LICENSE file.
 
 import argparse
-
 from typing import Optional
 
 from bitcointx import select_chain_params
+from bitcointx.signmessage import BitcoinMessage, SignMessage, VerifyMessage
 from bitcointx.wallet import CCoinKey, P2PKHCoinAddress
-from bitcointx.signmessage import BitcoinMessage, VerifyMessage, SignMessage
 
 
 def sign_message(key: str, msg: str) -> bytes:

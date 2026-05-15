@@ -22,9 +22,8 @@
 
 """Reference implementation for Bech32/Bech32m and segwit addresses."""
 
-from typing import List, Tuple, Optional, Union
-
 from enum import Enum
+from typing import List, Optional, Tuple, Union
 
 CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 BECH32_CONST = 1

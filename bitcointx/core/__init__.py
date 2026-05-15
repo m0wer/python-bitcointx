@@ -13,51 +13,25 @@
 # pylama:ignore=E501
 
 import binascii
-import struct
 import decimal
+import struct
 from abc import abstractmethod
 from io import BytesIO
 from typing import (
-    Union,
-    List,
-    Sequence,
-    Iterable,
-    Optional,
-    Set,
-    TypeVar,
-    Type,
     Any,
-    Dict,
-    Tuple,
     Callable,
     ClassVar,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
     cast,
-)
-
-from . import script
-
-from .serialize import (
-    ImmutableSerializable,
-    make_mutable,
-    BytesSerializer,
-    VectorSerializer,
-    ser_read,
-    uint256_to_bytes,
-    uint256_from_bytes,
-    Hash,
-    Hash160,
-    ByteStream_Type,
-)
-
-from ..util import (
-    no_bool_use_as_property,
-    ClassMappingDispatcher,
-    activate_class_dispatcher,
-    dispatcher_wrap_methods,
-    classgetter,
-    ensure_isinstance,
-    ContextVarsCompat,
-    tagged_hasher,
 )
 
 # NOTE: due to custom class dispatching and mutable/immmutable
@@ -70,8 +44,31 @@ from ..util import (
 # Each 'type: ignore' related to ReadOnlyField/WriteableField
 # thus is not given a rationale.
 # This comment gives the rationale for all those type-ignores.
-from ..util import ReadOnlyField, WriteableField
-
+from ..util import (
+    ClassMappingDispatcher,
+    ContextVarsCompat,
+    ReadOnlyField,
+    WriteableField,
+    activate_class_dispatcher,
+    classgetter,
+    dispatcher_wrap_methods,
+    ensure_isinstance,
+    no_bool_use_as_property,
+    tagged_hasher,
+)
+from . import script
+from .serialize import (
+    BytesSerializer,
+    ByteStream_Type,
+    Hash,
+    Hash160,
+    ImmutableSerializable,
+    VectorSerializer,
+    make_mutable,
+    ser_read,
+    uint256_from_bytes,
+    uint256_to_bytes,
+)
 
 T__UintBitVector = TypeVar("T__UintBitVector", bound="_UintBitVector")
 
@@ -329,7 +326,7 @@ def coins_to_satoshi(value: Union[int, float, decimal.Decimal], check_range: boo
 
     if check_range:
         if not MoneyRange(result):
-            raise ValueError("resulting value ({}) is outside MoneyRange".format(result))
+            raise ValueError(f"resulting value ({result}) is outside MoneyRange")
 
     return result
 
@@ -345,7 +342,7 @@ def satoshi_to_coins(value: int, check_range: bool = True) -> decimal.Decimal:
 
     if check_range:
         if not MoneyRange(value):
-            raise ValueError("supplied value ({}) is outside MoneyRange".format(value))
+            raise ValueError(f"supplied value ({value}) is outside MoneyRange")
 
     return decimal.Decimal(value) / CoreCoinParams.COIN
 
@@ -450,10 +447,10 @@ def bytes_repr(buf: bytes, hexfun: Callable[[str], bytes] = x) -> str:
     elif hexfun is lx:
         bfun = b2lx
     else:
-        raise ValueError("invalid hexfun ({}) specified".format(hexfun))
+        raise ValueError(f"invalid hexfun ({hexfun}) specified")
     if len(buf) > 0 and all(b == buf[0] for b in buf):
-        return "{}('{}')*{}".format(hexfun.__name__, bfun(buf[:1]), len(buf))
-    return "{}('{}')".format(hexfun.__name__, bfun(buf))
+        return f"{hexfun.__name__}('{bfun(buf[:1])}')*{len(buf)}"
+    return f"{hexfun.__name__}('{bfun(buf)}')"
 
 
 class ValidationError(Exception):
@@ -501,7 +498,7 @@ class _UintBitVector(ImmutableSerializable, metaclass=_UintBitVectorMeta):
             data = b"\x00" * self._UINT_WIDTH_BYTES
         ensure_isinstance(data, (bytes, bytearray), "data")
         if len(data) != self._UINT_WIDTH_BYTES:
-            raise ValueError("invalid data length, should be {}".format(self._UINT_WIDTH_BYTES))
+            raise ValueError(f"invalid data length, should be {self._UINT_WIDTH_BYTES}")
         object.__setattr__(self, "data", bytes(data))
 
     @no_bool_use_as_property
@@ -652,7 +649,6 @@ class CTxIn(CoreCoinClass, next_dispatch_final=True):
         scriptSig: Optional[Union[script.CScript, bytes, bytearray]] = None,
         nSequence: int = 0xFFFFFFFF,
     ) -> None:
-
         ensure_isinstance(nSequence, int, "nSequence")
 
         if not (0 <= nSequence <= 0xFFFFFFFF):

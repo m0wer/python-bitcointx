@@ -11,14 +11,14 @@
 
 # pylama:ignore=E501
 
-import os
 import csv
+import hashlib
+import os
 import unittest
 import warnings
-import hashlib
 
-from bitcointx.core.key import CKey, CPubKey, XOnlyPubKey
 from bitcointx.core import x
+from bitcointx.core.key import CKey, CPubKey, XOnlyPubKey
 from bitcointx.core.secp256k1 import get_secp256k1
 
 
@@ -163,7 +163,7 @@ class Test_CKey(unittest.TestCase):
     def test_schnorr(self) -> None:
         # adapted from reference code of BIP340
         # at https://github.com/bitcoin/bips/blob/master/bip-0340/reference.py
-        with open(os.path.dirname(__file__) + "/data/schnorr-sig-test-vectors.csv", "r") as fd:
+        with open(os.path.dirname(__file__) + "/data/schnorr-sig-test-vectors.csv") as fd:
             reader = csv.reader(fd)
             reader.__next__()
             for row in reader:

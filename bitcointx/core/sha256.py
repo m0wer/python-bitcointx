@@ -24,7 +24,7 @@ authentication code), etc.
 # pylama:ignore=E501
 
 import struct
-from typing import Union, List, TypeVar
+from typing import List, TypeVar, Union
 
 SHA256_MAX = 0x1FFFFFFFFFFFFFFF
 

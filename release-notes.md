@@ -284,7 +284,7 @@ Non-breaking changes:
 * PSBT deserialization code can now convert non-witness UTXO to witness UTXO
   if `allow_convert_to_witness_utxo=True` is passed to `deserialize()`
   (or `from_base64()`, `from_binary()`, `from_base64_or_binary()`)
-* `KeyStore` got `replace_external_privkey_lookup()` and 
+* `KeyStore` got `replace_external_privkey_lookup()` and
   `replace_external_pubkey_lookup()` methods to set key lookup callbacks on
   existing KeyStore instance. The methods return previous callback value.
 
@@ -387,7 +387,7 @@ Breaking changes:
 
 Deprecations:
 
-* `CPubKey.is_valid()` is deprecated due to possibility of confusion 
+* `CPubKey.is_valid()` is deprecated due to possibility of confusion
   with `CPubKey.is_fullyvalid()`. `CPubKey.is_valid()` will be removed
   in the future. Please use `CPubKey.is_nonempty()` instead.
   CPubKey's `is_valid()`/`is_fullyvalid()` was modelled after BitcoinCore's
@@ -409,7 +409,7 @@ Non-breaking changes:
   if it cannot find rpcpassword in global section, and can take config file contents
   as `conf_file_contents` named arg. Conf dir lookup for Bitcoin testnet is fixed
   (the network id is 'test', the extra data dir is 'testnet3')
-* `select_chain_params` returns tuple of previous chain params and new chain params. 
+* `select_chain_params` returns tuple of previous chain params and new chain params.
 * Some asserts in the library are conveted to the checks that raise
   `ValueError` or `TypeError` depending on the check.
 * Fix class attribute dispatching code - ignore attributes of `abc.ABC` class
@@ -476,7 +476,7 @@ python-bitcointx is now much easier. See for example
 
 * Custom class dispatching is introduced for address classes,
   keys classes, and transaction classes (`CTransaction`, `CTxIn`, etc.)
-  
+
   For example, when you create `CTransaction`, with default chain
   params in effect, you will get an instance of `CBitcoinTransaction`.
 
@@ -491,7 +491,7 @@ python-bitcointx is now much easier. See for example
   transaction, while you are working with Elements blockchain via
   python-elementstx, you can do `CBitcoinTransaction.deserialize(btc_tx_data)`,
   and you will get the correct result.
-  
+
   To support the same abstraction for addresses, `CCoinAddress` (and
   related classes) was introduced. You can still use `CBitcoinAddress`,
   and when you use `CCoinAddress` with default chain parameters, you will
@@ -500,7 +500,7 @@ python-bitcointx is now much easier. See for example
   instance. Note that this breaks code that expect `CBitcoinAddress` to work with
   regtest and testnet addresses. For that code to work, you will need to switch
   from `CBitcoinAddress` to `CCoinAddress`
-  
+
   The good thing about this is that even after you switch the current chain
   parameters, the instances retain their representation in accordance to
   their class. An instance of `CBitcoinTestnetAddress` will still show up
@@ -508,7 +508,7 @@ python-bitcointx is now much easier. See for example
   that was used in python-bitcoinlib, your address instances that was
   created with testnet chain params in effect, will all automatically switch
   to 'mainnet' representation.
-  
+
   While this may not be a serious inconvenience when working only with Bitcoin,
   if you want to build a cross-chain atomic swap code between Bitcoin and
   Elements, for example, you will need to switch back and forth between the
@@ -612,7 +612,7 @@ python-bitcointx is now much easier. See for example
   - CKeyMixin, CExtKeyMixin, CExtPubKeyMixin renamed to CKeyBase, CExtKeyBase,
     CExtPubKeyBase
   - CBase58PrefixedData, CBase58RawData merged back into CBase58Data
- 
+
 * Breaking public API changes:
     - `CBitcoinAddress(<testnet_or_regtest_address>)` won't work: you will need to use `CCoinAddress` (universal, the class of returned instance depends on current chain params), or `CBitcoinTestnetAddress`/`CBitcoinRegtest` address directly. `CBitcoinAddress` is used only for Bitcoin mainnet addresses.
     - `rpc.Proxy` removed, `rpc.RPCCaller` added - same as old `rpc.RawProxy`,
@@ -699,7 +699,7 @@ python-bitcointx is now much easier. See for example
   available, and verify\_nonstrict() is called, a RuntimeError will be raised.
 
 * VerifyScript(): more `SCRIPT_VERIFY_*` flags are handled.
-  VerifyScriptError is raised if unhandled flag is explicitly given. 
+  VerifyScriptError is raised if unhandled flag is explicitly given.
   Warning about VerifyScript not being consensus-compatible added to README.
 
 * Make specifying alternative chain params easier with SelectAlternativeParams()
@@ -717,7 +717,7 @@ python-bitcointx is based on python-bitcoinlib
 
 as of commit 05cbb3c9560b36cfe71bac06085a231a6244e13a 2018-04-26 06:46:09
 
-therefore we include the 
+therefore we include the
 
 # python-bitcoinlib release notes
 
@@ -924,4 +924,3 @@ Other changes:
 Finally starting this release, git tags will be of the form
 'python-bitcoinlib-(version)', replacing the less specific '(version)' form
 previously used.
-

@@ -29,37 +29,36 @@
 #
 # https://github.com/petertodd/python-bitcoinlib/commit/6a0a2b9429edea318bea7b65a68a950cae536790
 
-import sys
-
 import argparse
 import logging
 import os
+import sys
 from typing import List, Tuple
 
 import bitcointx.rpc
 from bitcointx.core import (
-    x,
-    lx,
-    b2x,
-    Hash160,
-    COutPoint,
-    CTxOut,
-    CTxIn,
-    CTransaction,
-    str_money_value,
     CoreCoinParams,
+    COutPoint,
+    CTransaction,
+    CTxIn,
+    CTxOut,
+    Hash160,
+    b2x,
+    lx,
+    str_money_value,
+    x,
 )
 from bitcointx.core.script import (
-    CScript,
     MAX_SCRIPT_ELEMENT_SIZE,
-    OP_HASH160,
     OP_CHECKSIGVERIFY,
-    OP_DROP,
     OP_DEPTH,
+    OP_DROP,
     OP_EQUAL,
     OP_EQUALVERIFY,
+    OP_HASH160,
     OP_RETURN,
     SIGHASH_NONE,
+    CScript,
     ScriptElement_Type,
 )
 from bitcointx.wallet import CCoinKey, P2SHCoinAddress

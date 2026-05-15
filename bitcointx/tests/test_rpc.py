@@ -10,10 +10,9 @@
 # propagated, or distributed except according to the terms contained in the
 # LICENSE file.
 
-import unittest
 import base64
-
-from typing import Tuple, Optional
+import unittest
+from typing import Optional, Tuple
 
 from bitcointx import ChainParams
 from bitcointx.rpc import RPCCaller, split_hostport

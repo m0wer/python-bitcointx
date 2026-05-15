@@ -19,24 +19,24 @@ to evaluate bitcoin script.
 """
 
 import ctypes
-from typing import Union, Tuple, Set, Optional, Sequence
+from typing import Optional, Sequence, Set, Tuple, Union
 
-from bitcointx.util import ensure_isinstance
-from bitcointx.core import MoneyRange, CTransaction, CTxOut
+from bitcointx.core import CTransaction, CTxOut, MoneyRange
 from bitcointx.core.script import CScript, CScriptWitness
 from bitcointx.core.scripteval import (
-    SCRIPT_VERIFY_P2SH,
-    SCRIPT_VERIFY_DERSIG,
-    SCRIPT_VERIFY_NULLDUMMY,
+    ALL_SCRIPT_VERIFY_FLAGS,
     SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY,
     SCRIPT_VERIFY_CHECKSEQUENCEVERIFY,
-    SCRIPT_VERIFY_WITNESS,
+    SCRIPT_VERIFY_DERSIG,
+    SCRIPT_VERIFY_NULLDUMMY,
+    SCRIPT_VERIFY_P2SH,
     SCRIPT_VERIFY_TAPROOT,
-    ALL_SCRIPT_VERIFY_FLAGS,
+    SCRIPT_VERIFY_WITNESS,
     ScriptVerifyFlag_Type,
     VerifyScriptError,
     script_verify_flags_to_string,
 )
+from bitcointx.util import ensure_isinstance
 
 _libbitcoin_consensus = None
 
@@ -100,9 +100,7 @@ def _flags_to_libconsensus(
         raise ValueError("unknown flags supplied")
     if flags - BITCOINCONSENSUS_ACCEPTED_FLAGS:
         raise ValueError(
-            "some of the supplied flags are not handled by bitcoinconsensus libary: {}".format(
-                script_verify_flags_to_string(flags - BITCOINCONSENSUS_ACCEPTED_FLAGS)
-            )
+            f"some of the supplied flags are not handled by bitcoinconsensus libary: {script_verify_flags_to_string(flags - BITCOINCONSENSUS_ACCEPTED_FLAGS)}"
         )
 
     flags_value = 0
@@ -113,7 +111,6 @@ def _flags_to_libconsensus(
 
 
 def _add_function_definitions(handle: ctypes.CDLL) -> None:
-
     # Returns 1 if the input nIn of the serialized transaction pointed to by
     # txTo correctly spends the scriptPubKey pointed to by scriptPubKey under
     # the additional constraints specified by flags.
@@ -178,16 +175,16 @@ def load_bitcoinconsensus_library(
     try:
         handle = ctypes.cdll.LoadLibrary(path)
     except Exception as e:
-        raise ImportError("Cannot import consensus library: {}".format(e))
+        raise ImportError(f"Cannot import consensus library: {e}")
 
     _add_function_definitions(handle)
 
     lib_version = handle.bitcoinconsensus_version()
     if lib_version != BITCOINCONSENSUS_API_VER:
         raise ImportError(
-            "bitcoinconsensus_version returned {}, "
+            f"bitcoinconsensus_version returned {lib_version}, "
             "while this library only knows how to work with "
-            "version {}".format(lib_version, BITCOINCONSENSUS_API_VER)
+            f"version {BITCOINCONSENSUS_API_VER}"
         )
 
     return handle
@@ -258,8 +255,8 @@ def ConsensusVerifyScript(
             and txTo.wit.vtxinwit[inIdx].scriptWitness != witness
         ):
             raise ValueError(
-                "transaction has witness for input {}, "
-                "but it is different from what is supplied as witness kwarg".format(inIdx)
+                f"transaction has witness for input {inIdx}, "
+                "but it is different from what is supplied as witness kwarg"
             )
         txTo = txTo.to_mutable()
         txTo.wit.vtxinwit[inIdx].scriptWitness = witness
@@ -331,9 +328,7 @@ def ConsensusVerifyScript(
 
     if err > BITCOINCONENSUS_LAST_ERROR_VALUE:
         raise RuntimeError(
-            "bitcoinconsensus_verify_script_with_amount failed with unknown error code {}".format(
-                err
-            )
+            f"bitcoinconsensus_verify_script_with_amount failed with unknown error code {err}"
         )
 
     if err != bitcoinconsensus_ERR_OK:

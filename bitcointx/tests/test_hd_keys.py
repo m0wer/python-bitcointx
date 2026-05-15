@@ -11,23 +11,21 @@
 
 # pylama:ignore=E501
 
-import os
 import json
+import os
 import unittest
+from typing import Dict, List, Tuple, Union
 
-from typing import List, Tuple, Dict, Union
-
-from bitcointx.core import b2x, x
 from bitcointx.base58 import Base58Error
+from bitcointx.core import b2x, x
 from bitcointx.core.key import (
-    CExtKey,
-    CExtPubKey,
+    BIP32_HARDENED_KEY_OFFSET,
     BIP32Path,
     BIP32PathTemplate,
-    BIP32_HARDENED_KEY_OFFSET,
+    CExtKey,
+    CExtPubKey,
 )
 from bitcointx.wallet import CBitcoinExtKey, CBitcoinExtPubKey
-
 
 BIP32_TEST_VECTORS: List[List[Tuple[str, str, int]]] = [
     [
@@ -222,7 +220,7 @@ BIP32_TEST_VECTOR_INVALIDXKEYS = [
 
 
 def load_path_teplate_test_vectors(name: str) -> Dict[str, List[Union[str, List[str]]]]:
-    with open(os.path.dirname(__file__) + "/data/" + name, "r") as fd:
+    with open(os.path.dirname(__file__) + "/data/" + name) as fd:
         return json.load(fd)  # type: ignore
 
 

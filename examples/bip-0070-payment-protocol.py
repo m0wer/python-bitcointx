@@ -18,7 +18,9 @@ Creates http response objects suitable for use with
 bitcoin bip 70 using googles protocol buffers.
 """
 
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from time import time
+from typing import Dict, Tuple
 
 # generate paymentrequest_pb2 with protobuf compiler as described in
 # https://developers.google.com/protocol-buffers/docs/pythontutorial
@@ -26,15 +28,11 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 # https://github.com/bitcoin/bips/blob/master/bip-0070/paymentrequest.proto
 import paymentrequest_pb2 as o  # type: ignore
 
-# import bitcointx
-
-from bitcointx.wallet import CCoinAddress
 from bitcointx.core.script import CScript
 from bitcointx.rpc import RPCCaller
 
-from typing import Dict, Tuple
-
-from time import time
+# import bitcointx
+from bitcointx.wallet import CCoinAddress
 
 # bitcointx.select_chain_params('bitcoin/regtest')
 
@@ -63,7 +61,7 @@ def payment_request() -> Tuple[bytes, Dict[str, str]]:
     pdo.outputs.add(amount=btc_amount, script=serialized_pubkey)
     pdo.time = int(time())
     pdo.memo = "String shown to user before confirming payment"
-    pdo.payment_url = "http://{}:{}/{}".format(listen_on_host, listen_on_port, ack_url_path)
+    pdo.payment_url = f"http://{listen_on_host}:{listen_on_port}/{ack_url_path}"
 
     pro = o.PaymentRequest()
     pro.serialized_payment_details = pdo.SerializeToString()

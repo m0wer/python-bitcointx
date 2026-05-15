@@ -12,57 +12,55 @@
 
 # pylama:ignore=E501
 
+import ctypes
 import json
 import os
+import random
 import unittest
 import warnings
-import ctypes
-import random
-
-from typing import List, Iterator, Tuple, Set, Optional, Sequence, Dict, Union
-
 from binascii import unhexlify
+from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple, Union
 
 from bitcointx.core import (
+    COutPoint,
+    CTransaction,
+    CTxIn,
+    CTxInWitness,
+    CTxOut,
+    CTxWitness,
+    ValidationError,
     coins_to_satoshi,
     x,
-    ValidationError,
-    CTxOut,
-    CTxIn,
-    CTransaction,
-    COutPoint,
-    CTxWitness,
-    CTxInWitness,
+)
+from bitcointx.core.bitcoinconsensus import (
+    BITCOINCONSENSUS_ACCEPTED_FLAGS,
+    ConsensusVerifyScript,
+    load_bitcoinconsensus_library,
 )
 from bitcointx.core.key import CKey, tap_tweak_pubkey
 from bitcointx.core.script import (
-    OPCODES_BY_NAME,
-    CScript,
-    CScriptWitness,
     OP_0,
+    OP_CHECKSIG,
+    OPCODES_BY_NAME,
     SIGHASH_ALL,
     SIGVERSION_BASE,
     SIGVERSION_WITNESS_V0,
-    OP_CHECKSIG,
-    standard_multisig_redeem_script,
-    standard_multisig_witness_stack,
+    CScript,
+    CScriptWitness,
+    SignatureHashSchnorr,
     TaprootScriptTree,
     TaprootScriptTreeLeaf_Type,
-    SignatureHashSchnorr,
+    standard_multisig_redeem_script,
+    standard_multisig_witness_stack,
 )
 from bitcointx.core.scripteval import (
-    VerifyScript,
     SCRIPT_VERIFY_FLAGS_BY_NAME,
     SCRIPT_VERIFY_P2SH,
     SCRIPT_VERIFY_WITNESS,
     ScriptVerifyFlag_Type,
+    VerifyScript,
 )
-from bitcointx.core.bitcoinconsensus import (
-    ConsensusVerifyScript,
-    BITCOINCONSENSUS_ACCEPTED_FLAGS,
-    load_bitcoinconsensus_library,
-)
-from bitcointx.wallet import P2TRCoinAddress, CCoinKey
+from bitcointx.wallet import CCoinKey, P2TRCoinAddress
 
 TestDataIterator = Iterator[
     Tuple[
@@ -110,7 +108,7 @@ def parse_script(s: str) -> CScript:
 
 
 def load_test_vectors(name: str, skip_fixme: bool = True) -> TestDataIterator:
-    with open(os.path.dirname(__file__) + "/data/" + name, "r") as fd:
+    with open(os.path.dirname(__file__) + "/data/" + name) as fd:
         fixme_comment = None
         num_skipped = 0
         for test_case in json.load(fd):
@@ -119,15 +117,15 @@ def load_test_vectors(name: str, skip_fixme: bool = True) -> TestDataIterator:
 
             if len(test_case) == 2:
                 if not skip_fixme:
-                    assert test_case[0].startswith("FIXME"), (
-                        "we do not expect anything other than FIXME* here"
-                    )
+                    assert test_case[0].startswith(
+                        "FIXME"
+                    ), "we do not expect anything other than FIXME* here"
                     continue
                 if test_case[0] == "FIXME":
                     fixme_comment = test_case[1]
                     continue
                 if test_case[0] == "FIXME_END":
-                    warnings.warn("SKIPPED {} tests: {}".format(num_skipped, fixme_comment))
+                    warnings.warn(f"SKIPPED {num_skipped} tests: {fixme_comment}")
                     fixme_comment = None
                     num_skipped = 0
                     continue
@@ -149,7 +147,7 @@ def load_test_vectors(name: str, skip_fixme: bool = True) -> TestDataIterator:
             if len(to_unpack) == 4:
                 to_unpack.append("")  # add missing comment
 
-            assert len(to_unpack) == 5, "unexpected test data format: {}".format(to_unpack)
+            assert len(to_unpack) == 5, f"unexpected test data format: {to_unpack}"
 
             scriptSig_str, scriptPubKey_str, flags, expected_result, comment = to_unpack
 

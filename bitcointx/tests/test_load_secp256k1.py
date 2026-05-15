@@ -9,16 +9,15 @@
 # propagated, or distributed except according to the terms contained in the
 # LICENSE file.
 
+import binascii
+import ctypes
 import unittest
 
-import ctypes
-import binascii
-from bitcointx.core.secp256k1 import secp256k1_load_library, Secp256k1
+from bitcointx.core.secp256k1 import Secp256k1, secp256k1_load_library
 
 
 class Test_Load_Secp256k1(unittest.TestCase):
     def test(self) -> None:
-
         def check_pub_parse(secp256k1: Secp256k1) -> None:
             pub = binascii.unhexlify(
                 "037b6e1e0cb249ae1c8320543a8f1d3f43c093529d9e838c47616c9c9f587ad818"

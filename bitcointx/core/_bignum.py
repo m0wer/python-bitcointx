@@ -16,7 +16,6 @@
 import struct
 from typing import Optional
 
-
 # generic big endian MPI format
 
 

@@ -24,13 +24,13 @@ a different implementation can be used instead, at your own risk:
 thus better optimized but perhaps less stable.)
 """
 
-import http.client
 import base64
 import decimal
+import http.client
 import json
 import os
 import urllib.parse
-from typing import Type, Dict, Tuple, Optional, Union, Any, Callable, Iterable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Optional, Tuple, Type, Union
 
 import bitcointx
 
@@ -192,7 +192,7 @@ def _try_read_conf_file(
 
     # Extract contents of bitcoin.conf to build service_url
     try:
-        with open(conf_file, "r") as fd:
+        with open(conf_file) as fd:
             for line in fd.readlines():
                 process_line(line)
     # Treat a missing bitcoin.conf as though it were empty
@@ -239,7 +239,6 @@ class RPCCaller:
         timeout: int = DEFAULT_HTTP_TIMEOUT,
         connection: Optional[HTTPClient_Type] = None,
     ) -> None:
-
         if (conf_file is not None) and (conf_file_contents is not None):
             raise ValueError(
                 "Either conf_file or conf_file_contents must be specified, but not both"
@@ -287,9 +286,9 @@ class RPCCaller:
                 cookie_dir = os.path.join(cookie_dir, extraname)
                 cookie_file = os.path.join(cookie_dir, ".cookie")
                 try:
-                    with open(cookie_file, "r") as fd:
+                    with open(cookie_file) as fd:
                         authpair = fd.read()
-                except IOError as err:
+                except OSError as err:
                     io_err = err
 
             if authpair is None:
@@ -343,7 +342,6 @@ class RPCCaller:
             )
 
     def _call(self, service_name: str, *args: Any) -> Any:
-
         if self.__conn is None:
             raise RuntimeError("connection is not configured")
 
