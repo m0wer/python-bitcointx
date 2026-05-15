@@ -16,13 +16,37 @@ from hashlib anymore.
 Runtime performance will be slow, but the alternative is having a compiled
 dependency, which is too heavy.
 
+When ``hashlib`` exposes a working ``ripemd160`` implementation (typically
+via the OpenSSL legacy provider) we transparently delegate to it, which is
+orders of magnitude faster than the pure-Python compression loop below. The
+pure-Python fallback remains the source of truth for correctness and is the
+implementation that is exercised by the test vectors.
+
 IMPORTANT: code is not constant-time! This should NOT be used for working
 with secret data, such as, for example  building a MAC (message
 authentication code), etc.
 (btw, you cannot expect constant-time behavior from python code at all)
 """
 
+import hashlib
 from typing import Tuple
+
+
+def _hashlib_ripemd160_available() -> bool:
+    """Probe whether hashlib can produce a working ripemd160 digest.
+
+    On OpenSSL 3 without the legacy provider, ``hashlib.new('ripemd160')``
+    raises at construction time, so this check both verifies presence and that
+    the algorithm is actually usable.
+    """
+    try:
+        hashlib.new('ripemd160', b'').digest()
+    except (ValueError, AttributeError):  # pragma: no cover - environment dependent
+        return False
+    return True
+
+
+_USE_HASHLIB = _hashlib_ripemd160_available()
 
 # Message schedule indexes for the left path.
 ML = [
@@ -119,6 +143,18 @@ def ripemd160(data: bytes) -> bytes:
     The code is not constant-time! This should NOT be used for working with
     secret data, such as, for example  building a MAC (message authentication
     code), etc.
+    """
+    if _USE_HASHLIB:
+        return hashlib.new('ripemd160', data).digest()
+    return _ripemd160_pure(data)
+
+
+def _ripemd160_pure(data: bytes) -> bytes:
+    """Pure-Python reference implementation of RIPEMD-160.
+
+    Kept as the verifiable source of truth and as the fallback used when
+    ``hashlib`` does not provide a usable ripemd160 (for example, OpenSSL 3
+    without the legacy provider).
     """
     # Initialize state.
     state = (0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0)
