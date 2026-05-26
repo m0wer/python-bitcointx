@@ -91,4 +91,5 @@ jobs:
       - name: Run tests
         env:
           LD_LIBRARY_PATH: /usr/local/lib
+          DYLD_LIBRARY_PATH: /usr/local/lib
         run: pytest -q
