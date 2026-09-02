@@ -36,7 +36,8 @@ from bitcointx.core.script import (
 )
 from bitcointx.core.scripteval import (
     VerifyScript, SCRIPT_VERIFY_FLAGS_BY_NAME, SCRIPT_VERIFY_P2SH,
-    SCRIPT_VERIFY_WITNESS, ScriptVerifyFlag_Type
+    SCRIPT_VERIFY_TAPROOT, SCRIPT_VERIFY_WITNESS,
+    UNHANDLED_SCRIPT_VERIFY_FLAGS, ScriptVerifyFlag_Type, VerifyScriptError
 )
 from bitcointx.core.bitcoinconsensus import (
     ConsensusVerifyScript, BITCOINCONSENSUS_ACCEPTED_FLAGS,
@@ -357,6 +358,35 @@ class Test_EvalScript(unittest.TestCase):
             self.skipTest("bitcoinconsensus library is not available")
         # disabled until libbitcoinconsensus can handle taproot scripts
         # self._do_test_bicoinconsensus(self._bitcoinconsensus_handle, self.generate_taproot_test_scripts())
+
+    def test_taproot_verification_is_unhandled(self) -> None:
+        key = CCoinKey.from_secret_bytes(b'\x01' * 32)
+        script_pub_key = P2TRCoinAddress.from_xonly_pubkey(
+            key.xonly_pub).to_scriptPubKey()
+        amount = 100
+
+        self.assertIn(SCRIPT_VERIFY_TAPROOT, UNHANDLED_SCRIPT_VERIFY_FLAGS)
+
+        for witness in (CScriptWitness([]), CScriptWitness([b'garbage'])):
+            _, tx_spend = self.create_test_txs(
+                CScript(), script_pub_key, script_pub_key, witness, amount)
+            with self.assertRaisesRegex(
+                VerifyScriptError,
+                'some of the flags cannot be handled by current code: TAPROOT'
+            ):
+                VerifyScript(
+                    CScript(), script_pub_key, tx_spend, 0,
+                    flags=(SCRIPT_VERIFY_P2SH, SCRIPT_VERIFY_WITNESS,
+                           SCRIPT_VERIFY_TAPROOT),
+                    amount=amount, witness=witness)
+
+        _, tx_spend = self.create_test_txs(
+            CScript(), script_pub_key, script_pub_key, CScriptWitness([]), amount)
+        with self.assertRaisesRegex(
+            VerifyScriptError, 'upgradeable witness program is not accepted'
+        ):
+            VerifyScript(CScript(), script_pub_key, tx_spend, 0,
+                         amount=amount, witness=CScriptWitness([]))
 
     def test_p2sh_redeemscript(self) -> None:
         def T(required: int, total: int, alt_total: Optional[int] = None) -> None:
