@@ -26,6 +26,10 @@ dynamic = ["version"]
 #   - libbitcoinconsensus (optional).
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/m0wer/python-bitcointx"
+Issues = "https://github.com/m0wer/python-bitcointx/issues"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
