@@ -697,10 +697,44 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
         self.sign(unsigned_tx, KeyStore(), finalize=False)
 
     def merge(self: T_PSBT_Input, other: T_PSBT_Input,
-              allow_blob_duplicates: bool = False) -> None:
+              allow_blob_duplicates: bool = False,
+              unsigned_tx: Optional[CTransaction] = None) -> None:
 
         # checks index fields, so need to be first
         merge_input_output_common_fields(self, other, 'input')
+
+        def check_witness_and_nonwitness_utxo_in_sync(
+            witness_utxo: CTxOut, non_witness_utxo: CTransaction,
+        ) -> None:
+            if unsigned_tx is None:
+                raise ValueError(
+                    'cannot check that witness and non-witness utxos are '
+                    f'in sync for input at index {self.index} during merge: '
+                    'unsigned_tx argument is required')
+
+            if self.index is None:
+                raise ValueError(
+                    'cannot check that witness and non-witness utxos are '
+                    'in sync during merge: input index is required')
+
+            if self.index >= len(unsigned_tx.vin):
+                raise ValueError(
+                    f'input index {self.index} is beyond the length of '
+                    'inputs in unsigned_tx during merge')
+
+            prevout_index = unsigned_tx.vin[self.index].prevout.n
+            if prevout_index >= len(non_witness_utxo.vout):
+                raise ValueError(
+                    f'prevout index in unsigned_tx is beyond the length of '
+                    f'outputs of non-witness utxo for input at index '
+                    f'{self.index} during merge')
+
+            if witness_utxo.serialize() != \
+                    non_witness_utxo.vout[prevout_index].serialize():
+                raise ValueError(
+                    'witness utxo is not equal to the corresponding output '
+                    f'in non-witness utxo for input at index {self.index} '
+                    'during merge')
 
         if not self.utxo:
             self._utxo = other._utxo
@@ -718,15 +752,8 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
         elif not self.witness_utxo and other.witness_utxo:
             assert isinstance(self.utxo, CTransaction)
             # The witness utxo wins, but we check consistency first
-            for vout in self.utxo.vout:
-                if vout.serialize() == other.witness_utxo.serialize():
-                    break
-            else:
-                raise ValueError(
-                    f'witness utxo (CTxOut) in in merge source at index '
-                    f'{other.index} does not exist in outputs of '
-                    f'non-witness utxo (CTransaction) of the '
-                    f'merge destination')
+            check_witness_and_nonwitness_utxo_in_sync(
+                other.witness_utxo, self.utxo)
 
             # The witness utxo wins
             if self.utxo.is_mutable():
@@ -738,14 +765,8 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
         elif self.witness_utxo and not other.witness_utxo:
             assert isinstance(other.utxo, CTransaction)
             # The witness utxo wins, but we check consistency first
-            for vout in other.utxo.vout:
-                if vout.serialize() == self.witness_utxo.serialize():
-                    break
-            else:
-                raise ValueError(
-                    f'witness utxo (CTxOut) in in merge destination '
-                    f'at index {self.index} does not exist in outputs of '
-                    f'non-witness utxo (CTransaction) of the merge source')
+            check_witness_and_nonwitness_utxo_in_sync(
+                self.witness_utxo, other.utxo)
         elif self.witness_utxo and other.witness_utxo:
             if self.witness_utxo.serialize() != other.witness_utxo.serialize():
                 raise ValueError(
@@ -1894,7 +1915,8 @@ class PartiallySignedTransaction(PSBT_CoinClass, next_dispatch_final=True):
 
         for index, inp in enumerate(self.inputs):
             inp.merge(other.inputs[index],
-                      allow_blob_duplicates=allow_blob_duplicates)
+                      allow_blob_duplicates=allow_blob_duplicates,
+                      unsigned_tx=self.unsigned_tx)
 
         if not self.outputs and other.outputs:
             if not tx_assigned:

@@ -615,6 +615,58 @@ class Test_PSBT(unittest.TestCase):
             self.assertEqual(outp.proprietary_fields[prefix][len(outp_clone.proprietary_fields[prefix]):],
                              outp_clone.proprietary_fields[prefix])
 
+    def test_merge_witness_utxo_matches_spent_prevout(self) -> None:
+        spent_txout = CTxOut(
+            1000, CScript([b'spent']).to_p2sh_scriptPubKey())
+        wrong_txout = CTxOut(
+            2000, CScript([b'wrong']).to_p2sh_scriptPubKey())
+        prev_tx = CTransaction(
+            [CTxIn(COutPoint(b'\x00' * 32, 0))],
+            [spent_txout, wrong_txout])
+        unsigned_tx = CTransaction(
+            [CTxIn(COutPoint(prev_tx.GetTxid(), 0))],
+            [CTxOut(900, CScript([b'destination']))])
+
+        def make_full_input() -> PSBT_Input:
+            return PSBT_Input(unsigned_tx=unsigned_tx, utxo=prev_tx, index=0)
+
+        def make_witness_input(txout: CTxOut) -> PSBT_Input:
+            return PSBT_Input(unsigned_tx=unsigned_tx, utxo=txout, index=0)
+
+        with self.assertRaisesRegex(ValueError, 'unsigned_tx argument is required'):
+            PSBT_Input(utxo=prev_tx, index=0).merge(
+                make_witness_input(spent_txout))
+
+        for first, second in (
+            (make_full_input, lambda: make_witness_input(wrong_txout)),
+            (lambda: make_witness_input(wrong_txout), make_full_input),
+        ):
+            with self.subTest(first=first.__name__):
+                first_psbt = PartiallySignedTransaction(
+                    unsigned_tx=unsigned_tx, inputs=[first()],
+                    relaxed_sanity_checks=True)
+                second_psbt = PartiallySignedTransaction(
+                    unsigned_tx=unsigned_tx, inputs=[second()],
+                    relaxed_sanity_checks=True)
+                with self.assertRaisesRegex(
+                    ValueError, 'corresponding output in non-witness utxo'):
+                    first_psbt.combine(second_psbt)
+
+        for first, second in (
+            (make_full_input, lambda: make_witness_input(spent_txout)),
+            (lambda: make_witness_input(spent_txout), make_full_input),
+        ):
+            with self.subTest(first=first.__name__):
+                first_psbt = PartiallySignedTransaction(
+                    unsigned_tx=unsigned_tx, inputs=[first()],
+                    relaxed_sanity_checks=True)
+                second_psbt = PartiallySignedTransaction(
+                    unsigned_tx=unsigned_tx, inputs=[second()],
+                    relaxed_sanity_checks=True)
+                combined = first_psbt.combine(second_psbt)
+                self.assertEqual(combined.inputs[0].witness_utxo,
+                                 spent_txout)
+
     def test_clone(self) -> None:
         # Take some PSBT, fill all the fields that we know exist,
         # and check that clone() creates the same PSBT
