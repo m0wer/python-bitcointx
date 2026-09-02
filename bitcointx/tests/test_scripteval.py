@@ -31,6 +31,7 @@ from bitcointx.core.key import CKey, tap_tweak_pubkey
 from bitcointx.core.script import (
     OPCODES_BY_NAME, CScript, CScriptWitness,
     OP_0, SIGHASH_ALL, SIGVERSION_BASE, SIGVERSION_WITNESS_V0, OP_CHECKSIG,
+    OP_CODESEPARATOR,
     standard_multisig_redeem_script, standard_multisig_witness_stack,
     TaprootScriptTree, TaprootScriptTreeLeaf_Type, SignatureHashSchnorr
 )
@@ -486,3 +487,32 @@ class Test_EvalScript(unittest.TestCase):
             T(1, 16)
             T(11, 11, alt_total=12)
             T(1, 3, alt_total=2)
+
+    def test_p2wsh_codeseparator_uses_post_separator_script_code(self) -> None:
+        key = CKey.from_secret_bytes(b'\x01' * 32)
+        witness_script = CScript([OP_CODESEPARATOR, bytes(key.pub), OP_CHECKSIG])
+        script_pub_key = witness_script.to_p2wsh_scriptPubKey()
+        amount = 100
+        witness_script_code = CScript(witness_script[1:])
+
+        _, tx_spend = self.create_test_txs(
+            CScript(), script_pub_key, CScript(), CScriptWitness(), amount)
+
+        signature = key.sign(witness_script_code.sighash(
+            tx_spend, 0, SIGHASH_ALL, amount=amount,
+            sigversion=SIGVERSION_WITNESS_V0)) + bytes([SIGHASH_ALL])
+        witness = CScriptWitness([signature, bytes(witness_script)])
+
+        VerifyScript(CScript(), script_pub_key, tx_spend, 0,
+                     flags=(SCRIPT_VERIFY_WITNESS, SCRIPT_VERIFY_P2SH),
+                     amount=amount, witness=witness)
+
+        old_signature = key.sign(witness_script.sighash(
+            tx_spend, 0, SIGHASH_ALL, amount=amount,
+            sigversion=SIGVERSION_WITNESS_V0)) + bytes([SIGHASH_ALL])
+        old_witness = CScriptWitness([old_signature, bytes(witness_script)])
+
+        with self.assertRaises(VerifyScriptError):
+            VerifyScript(CScript(), script_pub_key, tx_spend, 0,
+                         flags=(SCRIPT_VERIFY_WITNESS, SCRIPT_VERIFY_P2SH),
+                         amount=amount, witness=old_witness)

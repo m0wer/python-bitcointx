@@ -892,7 +892,7 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
                         stack.append(b"\x00")
 
             elif sop == OP_CODESEPARATOR:
-                pbegincodehash = sop_pc
+                pbegincodehash = sop_pc + 1
 
             elif sop == OP_DEPTH:
                 bn = len(stack)
