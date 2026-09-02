@@ -29,6 +29,7 @@ from bitcointx import (
     select_chain_params
 )
 from bitcointx.util import dispatcher_mapped_list
+from bitcointx.base58 import encode
 from bitcointx.core import (
     b2x, x, Hash160, CTransaction, CMutableTransaction, CTxOut,
     CMutableTxInWitness, CoreCoinParams
@@ -499,6 +500,17 @@ class Test_CBitcoinKey(unittest.TestCase):
         T('L3p8oAcQTtuokSCRHQ7i4MhjWc9zornvpJLfmg62sYpLRJF9woSu',
           '0378d430274f8c5ec1321338151e9f27f4c676a008bdf8638d07c0b6be9ab35c71',
           True)
+
+    def test_rejects_noncanonical_compression_marker(self) -> None:
+        payload = (
+            CBitcoinKey.base58_prefix
+            + x('0de5306487851213f0aae1454f4e4449949a755802b60f6eb47906149395d080')
+            + b'\x02'
+        )
+        wif = encode(payload + bitcointx.core.Hash(payload)[:4])
+
+        with self.assertRaises(ValueError):
+            CBitcoinKey(wif)
 
     def test_sign(self) -> None:
         key = CBitcoinKey('5KJvsngHeMpm884wtkJNzQGaCErckhHJBGFsvd3VyK5qMZXj3hS')

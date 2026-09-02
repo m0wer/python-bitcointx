@@ -831,9 +831,14 @@ class CCoinKey(CBase58DataDispatched, CKeyBase,
 
     def __init__(self, _s: str) -> None:
         data = self
-        if len(data) > 33:
-            raise ValueError('data size must not exceed 33 bytes')
-        compressed = (len(data) > 32 and data[32] == 1)
+        if len(data) == 32:
+            compressed = False
+        elif len(data) == 33 and data[32] == 1:
+            compressed = True
+        else:
+            raise ValueError(
+                'data size must be 32 bytes, or 33 bytes with '
+                'compression marker')
         CKeyBase.__init__(self, None, compressed=compressed)
 
     @classmethod
