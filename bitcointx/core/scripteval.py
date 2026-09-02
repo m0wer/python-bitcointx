@@ -790,7 +790,6 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
 
             elif fExec:
                 stack.append(sop_data)
-                continue
 
         elif fExec or (OP_IF <= sop <= OP_ENDIF):
 

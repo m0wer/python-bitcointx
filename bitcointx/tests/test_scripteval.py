@@ -30,15 +30,16 @@ from bitcointx.core import (
 from bitcointx.core.key import CKey, tap_tweak_pubkey
 from bitcointx.core.script import (
     OPCODES_BY_NAME, CScript, CScriptWitness,
-    OP_0, SIGHASH_ALL, SIGVERSION_BASE, SIGVERSION_WITNESS_V0, OP_CHECKSIG,
-    OP_CHECKMULTISIG, OP_CODESEPARATOR, OP_WITHIN,
+    OP_0, OP_IF, OP_ENDIF, SIGHASH_ALL, SIGVERSION_BASE, SIGVERSION_WITNESS_V0,
+    OP_CHECKSIG, OP_CHECKMULTISIG, OP_CODESEPARATOR, OP_WITHIN,
     standard_multisig_redeem_script, standard_multisig_witness_stack,
     TaprootScriptTree, TaprootScriptTreeLeaf_Type, SignatureHashSchnorr
 )
 from bitcointx.core.scripteval import (
     EvalScript, VerifyScript, SCRIPT_VERIFY_FLAGS_BY_NAME, SCRIPT_VERIFY_P2SH,
     SCRIPT_VERIFY_TAPROOT, SCRIPT_VERIFY_WITNESS,
-    UNHANDLED_SCRIPT_VERIFY_FLAGS, ScriptVerifyFlag_Type, VerifyScriptError
+    UNHANDLED_SCRIPT_VERIFY_FLAGS, EvalScriptError, MAX_STACK_ITEMS,
+    ScriptVerifyFlag_Type, VerifyScriptError
 )
 from bitcointx.core.bitcoinconsensus import (
     ConsensusVerifyScript, BITCOINCONSENSUS_ACCEPTED_FLAGS,
@@ -335,6 +336,26 @@ class Test_EvalScript(unittest.TestCase):
                 self.assertEqual(len(stack), 1)
                 self.assertEqual(len(stack[0]), 0)
                 self.assertEqual(stack[0], b'')
+
+    def test_pushes_enforce_stack_items_limit(self) -> None:
+        _, tx = self.create_test_txs(CScript(), CScript(), CScript(),
+                                     CScriptWitness(), 1)
+
+        stack: List[bytes] = []
+        EvalScript(stack, CScript([b'\x01'] * MAX_STACK_ITEMS), tx, 0)
+        self.assertEqual(len(stack), MAX_STACK_ITEMS)
+
+        stack = []
+        with self.assertRaisesRegex(EvalScriptError,
+                                    'max stack items limit reached'):
+            EvalScript(stack, CScript([b'\x01'] * (MAX_STACK_ITEMS + 1)),
+                       tx, 0)
+
+        stack = []
+        EvalScript(stack, CScript(
+            [OP_0, OP_IF] + [b'\x01'] * (MAX_STACK_ITEMS + 1) + [OP_ENDIF]),
+            tx, 0)
+        self.assertEqual(stack, [])
 
     def _do_test_bicoinconsensus(
         self, handle: Optional[ctypes.CDLL],
