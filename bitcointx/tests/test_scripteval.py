@@ -31,12 +31,12 @@ from bitcointx.core.key import CKey, tap_tweak_pubkey
 from bitcointx.core.script import (
     OPCODES_BY_NAME, CScript, CScriptWitness,
     OP_0, SIGHASH_ALL, SIGVERSION_BASE, SIGVERSION_WITNESS_V0, OP_CHECKSIG,
-    OP_CODESEPARATOR,
+    OP_CHECKMULTISIG, OP_CODESEPARATOR, OP_WITHIN,
     standard_multisig_redeem_script, standard_multisig_witness_stack,
     TaprootScriptTree, TaprootScriptTreeLeaf_Type, SignatureHashSchnorr
 )
 from bitcointx.core.scripteval import (
-    VerifyScript, SCRIPT_VERIFY_FLAGS_BY_NAME, SCRIPT_VERIFY_P2SH,
+    EvalScript, VerifyScript, SCRIPT_VERIFY_FLAGS_BY_NAME, SCRIPT_VERIFY_P2SH,
     SCRIPT_VERIFY_TAPROOT, SCRIPT_VERIFY_WITNESS,
     UNHANDLED_SCRIPT_VERIFY_FLAGS, ScriptVerifyFlag_Type, VerifyScriptError
 )
@@ -312,6 +312,29 @@ class Test_EvalScript(unittest.TestCase):
 
             if expected_result != 'OK':
                 self.fail('Expected %r to fail (%s)' % (test_case, expected_result))
+
+    def test_false_results_are_empty_vectors(self) -> None:
+        key = CKey.from_secret_bytes(b'\x01' * 32)
+        invalid_signature = b'\x30\x06\x02\x01\x01\x02\x01\x01\x01'
+        _, tx = self.create_test_txs(CScript(), CScript(), CScript(),
+                                     CScriptWitness(), 1)
+
+        scripts = {
+            'CHECKSIG': CScript([invalid_signature, bytes(key.pub), OP_CHECKSIG]),
+            'CHECKMULTISIG': CScript([
+                OP_0, invalid_signature, 1, bytes(key.pub), 1,
+                OP_CHECKMULTISIG
+            ]),
+            'WITHIN': CScript([2, 0, 1, OP_WITHIN]),
+        }
+
+        for opcode, script in scripts.items():
+            with self.subTest(opcode=opcode):
+                stack: List[bytes] = []
+                EvalScript(stack, script, tx, 0)
+                self.assertEqual(len(stack), 1)
+                self.assertEqual(len(stack[0]), 0)
+                self.assertEqual(stack[0], b'')
 
     def _do_test_bicoinconsensus(
         self, handle: Optional[ctypes.CDLL],

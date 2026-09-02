@@ -584,9 +584,7 @@ def _CheckMultiSig(opcode: CScriptOp, script: CScript,
         if success:
             stack.append(b"\x01")
         else:
-            # FIXME: this is incorrect, but not caught by existing
-            # test cases
-            stack.append(b"\x00")
+            stack.append(b"")
 
 
 # OP_2MUL and OP_2DIV are *not* included in this list as they are disabled
@@ -887,9 +885,7 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
                         if sop != OP_CHECKSIGVERIFY:
                             stack.append(b"\x01")
                     else:
-                        # FIXME: this is incorrect, but not caught by existing
-                        # test cases
-                        stack.append(b"\x00")
+                        stack.append(b"")
 
             elif sop == OP_CODESEPARATOR:
                 pbegincodehash = sop_pc + 1
@@ -1078,9 +1074,7 @@ def _EvalScript(stack: List[bytes], scriptIn: CScript,
                 if v_bool:
                     stack.append(b"\x01")
                 else:
-                    # FIXME: this is incorrect, but not caught by existing
-                    # test cases
-                    stack.append(b"\x00")
+                    stack.append(b"")
 
             else:
                 raise EvalScriptError('unsupported opcode 0x%x' % sop,
