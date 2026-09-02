@@ -60,18 +60,18 @@ class BitcoinMessage(ImmutableSerializable):
     message: bytes
     magic: bytes
 
-    def __init__(self, message: Union[str, bytes] = "",
-                 magic: Union[str, bytes] = "Bitcoin Signed Message:\n"
+    def __init__(self, message: Union[str, bytes, bytearray] = "",
+                 magic: Union[str, bytes, bytearray] = "Bitcoin Signed Message:\n"
                  ) -> None:
         if isinstance(message, str):
             message_bytes = message.encode("utf-8")
         else:
-            message_bytes = message
+            message_bytes = bytes(message)
 
         if isinstance(magic, str):
             magic_bytes = magic.encode("utf-8")
         else:
-            magic_bytes = magic
+            magic_bytes = bytes(magic)
 
         object.__setattr__(self, 'message', message_bytes)
         object.__setattr__(self, 'magic', magic_bytes)

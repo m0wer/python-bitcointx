@@ -28,6 +28,32 @@ def load_test_vectors(name: str) -> Iterator[Dict[str, Any]]:
 
 class Test_SignVerifyMessage(unittest.TestCase):
 
+    def test_message_bytearrays_are_copied(self) -> None:
+        source_message = bytearray(b'message')
+        source_magic = bytearray(b'Bitcoin Signed Message:\n')
+        message = BitcoinMessage(source_message, source_magic)
+        expected = BitcoinMessage(bytes(source_message), bytes(source_magic))
+
+        serialized = message.serialize()
+        gethash = message.GetHash()
+        object_hash = hash(message)
+
+        source_message[0] = ord('M')
+        source_magic[0] = ord('b')
+
+        self.assertIsInstance(message.message, bytes)
+        self.assertIsInstance(message.magic, bytes)
+        self.assertEqual(message.serialize(), serialized)
+        self.assertEqual(message, expected)
+        self.assertEqual(message.GetHash(), gethash)
+        self.assertEqual(hash(message), object_hash)
+
+    def test_message_bytes_and_strings(self) -> None:
+        self.assertEqual(
+            BitcoinMessage(b'message', b'magic').serialize(),
+            BitcoinMessage('message', 'magic').serialize(),
+        )
+
     @unittest.skipIf(
         not get_secp256k1().cap.has_pubkey_recovery,
         "secp256k1 compiled without pubkey recovery functions"

@@ -545,7 +545,7 @@ class COutPoint(CoreCoinClass, next_dispatch_final=True):
         if not len(hash) == 32:
             raise ValueError('%s: hash must be exactly 32 bytes; got %d bytes'
                              % (self.__class__.__name__, len(hash)))
-        object.__setattr__(self, 'hash', hash)
+        object.__setattr__(self, 'hash', bytes(hash))
         if not (0 <= n <= 0xffffffff):
             raise ValueError('%s: n must be in range 0x0 to 0xffffffff; got %x'
                              % (self.__class__.__name__, n))

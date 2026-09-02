@@ -94,6 +94,23 @@ class Test_COutPoint(unittest.TestCase):
         outpoint = COutPoint(lx('4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b'), 0)
         self.assertEqual(outpoint.serialize(), outpoint.clone().serialize())
 
+    def test_bytearray_hash_is_copied(self) -> None:
+        source_hash = bytearray(b'\x01' * 32)
+        outpoint = COutPoint(source_hash, 1)
+        expected = COutPoint(bytes(source_hash), 1)
+
+        serialized = outpoint.serialize()
+        gethash = outpoint.GetHash()
+        object_hash = hash(outpoint)
+
+        source_hash[0] = 2
+
+        self.assertIsInstance(outpoint.hash, bytes)
+        self.assertEqual(outpoint.serialize(), serialized)
+        self.assertEqual(outpoint, expected)
+        self.assertEqual(outpoint.GetHash(), gethash)
+        self.assertEqual(hash(outpoint), object_hash)
+
 
 class Test_CMutableOutPoint(unittest.TestCase):
     def test_GetHash(self) -> None:
