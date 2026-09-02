@@ -1,8 +1,3 @@
-[![Package version](https://img.shields.io/pypi/v/python-bitcointx.svg)](https://pypi.python.org/pypi/python-bitcointx)
-[![Package license](https://img.shields.io/pypi/l/python-bitcointx.svg)](https://pypi.python.org/pypi/python-bitcointx)
-[![Python versions](https://img.shields.io/pypi/pyversions/python-bitcointx.svg)](https://pypi.python.org/pypi/python-bitcointx)
-[![Build Status](https://github.com/Simplexum/python-bitcointx/actions/workflows/main.yml/badge.svg)](https://pypi.python.org/pypi/python-bitcointx)
-
 # python-bitcointx
 
 This Python3 library provides an easy interface to the bitcoin transaction data
@@ -42,14 +37,14 @@ the library and v1.0.0 release in particular, and also has some code examples.
 
 ## Requirements
 
-- Python >= 3.7
+- Python >= 3.11
 - [libsecp256k1](https://github.com/bitcoin-core/secp256k1)
 - [libbitcoinconsensus](https://github.com/bitcoin/bitcoin/blob/master/doc/shared-libraries.md) (optional, for consensus-compatible script verification)
 
-Tests use the following libsecp256k1 version:
+Tests use the following libsecp256k1 versions:
 
 [//]: # (!LIBSECP256K1_VERSION_MARKER_DO_NOT_MOVE_OR_EDIT! this marker is used by automatic tests to extract the version that is in the following line from this README.md, and use it to run tests with this specific version of libsecp256k1)
-`v0.4.0`
+`v0.4.0` and `v0.7.0`
 
 Libsecp256k1 is not linked as a git submodule in python-bitcointx git repository, because python-bitcointx
 can still be used with other versions of libsecp256k1 as long as experimental modules with unstable ABI
@@ -59,7 +54,7 @@ While allowing dynamic linkage with libsecp256k1 adds these complications, it is
 more flexibility for advanced uses. For example, one can use libsecp256k1-zkp instead of libsecp256k1 to
 have access to zero-knowledge-proof related functions, as is done by python-elementstx package.
 
-For best results, use the version listed above, as it is the version that python-bitcointx automatic tests
+For best results, use one of the versions listed above, as these are the versions that python-bitcointx automatic tests
 use to build libsecp256k1. Then make sure that this version of the library is loaded by python-bitcointx,
 by using `bitcointx.set_custom_secp256k1_path()` or `LD_LIBRARY_PATH ` environment variable.
 

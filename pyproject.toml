@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,14 +7,14 @@ name = "python-bitcointx"
 description = "A library for handling Bitcoin transactions and associated data"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "LGPL-3.0-or-later"}
+license = "LGPL-3.0-or-later"
+license-files = ["LICENSE"]
 keywords = ["bitcoin"]
 classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
     "Topic :: Security :: Cryptography",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -25,10 +25,6 @@ dynamic = ["version"]
 #     and the new `secp256k1_ec_seckey_*` symbol names).
 #   - libbitcoinconsensus (optional).
 dependencies = []
-
-[project.urls]
-Homepage = "https://github.com/Simplexum/python-bitcointx"
-Issues = "https://github.com/Simplexum/python-bitcointx/issues"
 
 [project.optional-dependencies]
 dev = [
