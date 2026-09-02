@@ -21,6 +21,7 @@ import bitcointx.core
 from typing import TypeVar, Type, List
 
 B58_DIGITS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+MAX_BASE58_STRING_LENGTH = 128
 
 
 T_CBase58Data = TypeVar('T_CBase58Data', bound='CBase58Data')
@@ -73,6 +74,11 @@ def decode(s: str) -> bytes:
     """Decode a base58-encoding string, returning bytes"""
     if not s:
         return b''
+
+    if len(s) > MAX_BASE58_STRING_LENGTH:
+        raise InvalidBase58Error(
+            'Base58 string is too long (maximum length is %d characters)'
+            % MAX_BASE58_STRING_LENGTH)
 
     # Convert the string to an integer
     n = 0
@@ -195,6 +201,7 @@ class CBase58Data(bytes):
 
 __all__ = (
     'B58_DIGITS',
+    'MAX_BASE58_STRING_LENGTH',
     'Base58Error',
     'InvalidBase58Error',
     'encode',

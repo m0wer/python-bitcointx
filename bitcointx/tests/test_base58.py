@@ -19,7 +19,10 @@ from typing import Iterator, Tuple
 
 from binascii import unhexlify
 
-from bitcointx.base58 import CBase58Data, encode, decode, Base58Error
+from bitcointx.base58 import (
+    CBase58Data, MAX_BASE58_STRING_LENGTH, encode, decode, Base58Error,
+    InvalidBase58Error,
+)
 
 
 def load_test_vectors(name: str) -> Iterator[Tuple[str, str]]:
@@ -38,6 +41,16 @@ class Test_base58(unittest.TestCase):
 
             self.assertEqual(act_base58, exp_base58)
             self.assertEqual(act_bin, exp_bin)
+
+    def test_decode_maximum_length(self) -> None:
+        value = '1' * MAX_BASE58_STRING_LENGTH
+        self.assertEqual(decode(value), b'\x00' * MAX_BASE58_STRING_LENGTH)
+
+    def test_decode_rejects_overlong_input(self) -> None:
+        value = '1' * (MAX_BASE58_STRING_LENGTH + 1)
+        with self.assertRaisesRegex(InvalidBase58Error,
+                                    'maximum length is 128 characters'):
+            decode(value)
 
 
 class Test_CBase58Data(unittest.TestCase):
