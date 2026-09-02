@@ -28,7 +28,8 @@ from bitcointx.core.script import (
     OP_CHECKSIG, OP_1NEGATE, OP_BOOLOR, OP_BOOLAND,
     OP_INVALIDOPCODE, OP_CHECKMULTISIG, OP_DROP,
     DATA, NUMBER, OPCODE,
-    SIGHASH_ALL, SIGHASH_Type, SIGVERSION_BASE, SIGVERSION_TAPROOT,
+    SIGHASH_ALL, SIGHASH_SINGLE, SIGHASH_Type, SIGVERSION_BASE,
+    SIGVERSION_TAPROOT,
     SIGVERSION_WITNESS_V0, SignatureHashSchnorr,
     IsLowDERSignature, parse_standard_multisig_redeem_script,
     StandardMultisigScriptInfo
@@ -158,6 +159,16 @@ class Test_CScript(unittest.TestCase):
                 tx, 0, spent_outputs, hashtype=SIGHASH_Type(SIGHASH_ALL),
                 sigversion=SIGVERSION_TAPROOT)),
             '26e28b91f93c68cd617c6209c833fdcd68b93e65b4047f29286b236e583d1ee7')
+
+    def test_schnorr_sighash_single_output_out_of_range(self) -> None:
+        tx = CTransaction([CTxIn(COutPoint(b'\x55' * 32, 0))], [])
+        spent_outputs = [CTxOut(5000, CScript([OP_1, b'\x11' * 32]))]
+
+        with self.assertRaisesRegex(ValueError, 'out of range'):
+            SignatureHashSchnorr(
+                tx, 0, spent_outputs,
+                hashtype=SIGHASH_Type(SIGHASH_SINGLE),
+                sigversion=SIGVERSION_TAPROOT)
 
     def test_parse_standard_multisig_redeem_script(self) -> None:
         def T(script: CScript) -> StandardMultisigScriptInfo:
