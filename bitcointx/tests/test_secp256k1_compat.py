@@ -62,15 +62,22 @@ _CORE_SYMBOLS = {
     "secp256k1_ecdsa_verify",
     "secp256k1_ec_pubkey_parse",
     "secp256k1_ec_pubkey_tweak_add",
+    "secp256k1_ec_pubkey_tweak_mul",
     "secp256k1_ec_pubkey_serialize",
     "secp256k1_ec_pubkey_combine",
 }
 
 
 class Test_Secp256k1_v07_Compat(unittest.TestCase):
-    def test_legacy_privkey_symbol(self) -> None:
-        """Pre-v0.7 libsecp256k1 only exports `secp256k1_ec_privkey_tweak_add`."""
-        lib = _FakeLib(_CORE_SYMBOLS | {"secp256k1_ec_privkey_tweak_add"})
+    def test_legacy_privkey_symbols(self) -> None:
+        """Pre-v0.7 libsecp256k1 only exports `secp256k1_ec_privkey_tweak_*`."""
+        lib = _FakeLib(
+            _CORE_SYMBOLS
+            | {
+                "secp256k1_ec_privkey_tweak_add",
+                "secp256k1_ec_privkey_tweak_mul",
+            }
+        )
 
         _add_function_definitions(lib)  # type: ignore[arg-type]
 
@@ -78,31 +85,51 @@ class Test_Secp256k1_v07_Compat(unittest.TestCase):
         # fully typed.
         self.assertIs(lib.secp256k1_ec_privkey_tweak_add, lib.secp256k1_ec_seckey_tweak_add)
         self.assertEqual(lib.secp256k1_ec_privkey_tweak_add.restype, ctypes.c_int)
+        self.assertIs(lib.secp256k1_ec_privkey_tweak_mul, lib.secp256k1_ec_seckey_tweak_mul)
+        self.assertEqual(lib.secp256k1_ec_privkey_tweak_mul.restype, ctypes.c_int)
+        self.assertEqual(lib.secp256k1_ec_pubkey_tweak_mul.restype, ctypes.c_int)
+        self.assertEqual(
+            lib.secp256k1_ec_pubkey_tweak_mul.argtypes,
+            [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p],
+        )
 
-    def test_modern_seckey_symbol(self) -> None:
-        """v0.7+ libsecp256k1 only exports `secp256k1_ec_seckey_tweak_add`."""
-        lib = _FakeLib(_CORE_SYMBOLS | {"secp256k1_ec_seckey_tweak_add"})
+    def test_modern_seckey_symbols(self) -> None:
+        """v0.7+ libsecp256k1 only exports `secp256k1_ec_seckey_tweak_*`."""
+        lib = _FakeLib(
+            _CORE_SYMBOLS
+            | {
+                "secp256k1_ec_seckey_tweak_add",
+                "secp256k1_ec_seckey_tweak_mul",
+            }
+        )
 
         _add_function_definitions(lib)  # type: ignore[arg-type]
 
         self.assertIs(lib.secp256k1_ec_privkey_tweak_add, lib.secp256k1_ec_seckey_tweak_add)
         self.assertEqual(lib.secp256k1_ec_seckey_tweak_add.restype, ctypes.c_int)
+        self.assertIs(lib.secp256k1_ec_privkey_tweak_mul, lib.secp256k1_ec_seckey_tweak_mul)
+        self.assertEqual(lib.secp256k1_ec_seckey_tweak_mul.restype, ctypes.c_int)
 
     def test_both_symbols_present_prefers_modern(self) -> None:
-        """If both spellings are exported, the modern `seckey` name wins."""
+        """If both spellings are exported, the modern `seckey` names win."""
         lib = _FakeLib(
             _CORE_SYMBOLS
             | {
                 "secp256k1_ec_privkey_tweak_add",
                 "secp256k1_ec_seckey_tweak_add",
+                "secp256k1_ec_privkey_tweak_mul",
+                "secp256k1_ec_seckey_tweak_mul",
             }
         )
         modern = lib.secp256k1_ec_seckey_tweak_add
+        modern_mul = lib.secp256k1_ec_seckey_tweak_mul
 
         _add_function_definitions(lib)  # type: ignore[arg-type]
 
         self.assertIs(lib.secp256k1_ec_privkey_tweak_add, modern)
         self.assertIs(lib.secp256k1_ec_seckey_tweak_add, modern)
+        self.assertIs(lib.secp256k1_ec_privkey_tweak_mul, modern_mul)
+        self.assertIs(lib.secp256k1_ec_seckey_tweak_mul, modern_mul)
 
     def test_seckey_negate_alias(self) -> None:
         """`secp256k1_ec_seckey_negate` (v0.7+) is aliased to the privkey name."""
@@ -110,6 +137,7 @@ class Test_Secp256k1_v07_Compat(unittest.TestCase):
             _CORE_SYMBOLS
             | {
                 "secp256k1_ec_privkey_tweak_add",
+                "secp256k1_ec_privkey_tweak_mul",
                 "secp256k1_ec_seckey_negate",
             }
         )

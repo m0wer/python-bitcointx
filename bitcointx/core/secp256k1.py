@@ -199,6 +199,9 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
     lib.secp256k1_ec_pubkey_tweak_add.restype = ctypes.c_int
     lib.secp256k1_ec_pubkey_tweak_add.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
 
+    lib.secp256k1_ec_pubkey_tweak_mul.restype = ctypes.c_int
+    lib.secp256k1_ec_pubkey_tweak_mul.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+
     # libsecp256k1 v0.7.0 renamed `secp256k1_ec_privkey_*` to
     # `secp256k1_ec_seckey_*`. Expose the function under both names on the
     # library handle so callers can use either spelling regardless of which
@@ -212,6 +215,15 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
     _tweak_add.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
     lib.secp256k1_ec_privkey_tweak_add = _tweak_add  # type: ignore[attr-defined]
     lib.secp256k1_ec_seckey_tweak_add = _tweak_add  # type: ignore[attr-defined]
+
+    if getattr(lib, 'secp256k1_ec_seckey_tweak_mul', None):
+        _tweak_mul = lib.secp256k1_ec_seckey_tweak_mul
+    else:
+        _tweak_mul = lib.secp256k1_ec_privkey_tweak_mul
+    _tweak_mul.restype = ctypes.c_int
+    _tweak_mul.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+    lib.secp256k1_ec_privkey_tweak_mul = _tweak_mul  # type: ignore[attr-defined]
+    lib.secp256k1_ec_seckey_tweak_mul = _tweak_mul  # type: ignore[attr-defined]
 
     lib.secp256k1_ec_pubkey_serialize.restype = ctypes.c_int
     lib.secp256k1_ec_pubkey_serialize.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_size_t), ctypes.c_char_p, ctypes.c_uint]

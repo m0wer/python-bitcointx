@@ -443,6 +443,21 @@ class CKeyBase:
             raise RuntimeError('secp256k1_ec_privkey_negate returned failure')
         return self.__class__.from_secret_bytes(key_buf.raw[:32], compressed=self.is_compressed())
 
+    def multiply(self: T_CKeyBase, scalar: bytes) -> T_CKeyBase:
+        if not isinstance(scalar, bytes) or len(scalar) != 32:
+            raise ValueError('scalar must be exactly 32 bytes')
+
+        key_buf = ctypes.create_string_buffer(self.secret_bytes)
+        secp256k1 = get_secp256k1()
+        ret = secp256k1.lib.secp256k1_ec_seckey_tweak_mul(
+            secp256k1.ctx.sign, key_buf, scalar)
+        if ret != 1:
+            assert ret == 0
+            raise ValueError('private key multiplication failed')
+
+        return self.__class__.from_secret_bytes(
+            key_buf.raw[:32], compressed=self.is_compressed())
+
     @classmethod
     def from_secret_bytes(cls: Type[T_CKeyBase],
                           secret: bytes, compressed: bool = True) -> T_CKeyBase:
@@ -724,6 +739,23 @@ class CPubKey(bytes):
         if 1 != ret:
             assert ret == 0
             raise RuntimeError('secp256k1_ec_pubkey_negate returned failure')
+
+        return self.__class__._from_ctypes_char_array(
+            pubkey_buf, compressed=self.is_compressed())
+
+    def multiply(self: T_CPubKey, scalar: bytes) -> T_CPubKey:
+        if not isinstance(scalar, bytes) or len(scalar) != 32:
+            raise ValueError('scalar must be exactly 32 bytes')
+        if not self.is_fullyvalid():
+            raise ValueError('cannot multiply an invalid pubkey')
+
+        pubkey_buf = self._to_ctypes_char_array()
+        secp256k1 = get_secp256k1()
+        ret = secp256k1.lib.secp256k1_ec_pubkey_tweak_mul(
+            secp256k1.ctx.verify, pubkey_buf, scalar)
+        if ret != 1:
+            assert ret == 0
+            raise ValueError('public key multiplication failed')
 
         return self.__class__._from_ctypes_char_array(
             pubkey_buf, compressed=self.is_compressed())

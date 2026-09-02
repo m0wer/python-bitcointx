@@ -140,6 +140,46 @@ class Test_CKey(unittest.TestCase):
                           'You should use newer version of secp256k1 library. '
                           'Tests that involve key substraction are skipped')
 
+    def test_multiply(self) -> None:
+        class DerivedCKey(CKey):
+            pass
+
+        class DerivedCPubKey(CPubKey):
+            pass
+
+        data = x('5586e3531b857c5a3d7af6d512ec84161f4531b66daf2ad72a6f647e4164c8ae')
+        scalar = b'\x00' * 31 + b'\x02'
+        one = b'\x00' * 31 + b'\x01'
+        group_order = x('FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141')
+
+        key = DerivedCKey(data, compressed=False)
+        pub = DerivedCPubKey(key.pub)
+        multiplied_key = key.multiply(scalar)
+        multiplied_pub = pub.multiply(scalar)
+
+        self.assertIsInstance(multiplied_key, DerivedCKey)
+        self.assertIsInstance(multiplied_pub, DerivedCPubKey)
+        self.assertFalse(multiplied_key.is_compressed())
+        self.assertFalse(multiplied_pub.is_compressed())
+        self.assertEqual(multiplied_key.pub, multiplied_pub)
+        self.assertEqual(key, data)
+        self.assertEqual(pub, key.pub)
+        self.assertEqual(key.multiply(one), key)
+        self.assertEqual(pub.multiply(one), pub)
+
+        invalid_scalars: tuple[object, ...] = (
+            b'\x00' * 32, group_order, b'\xff' * 32, b'\x01' * 31,
+            b'\x01' * 33, bytearray(one), None,
+        )
+        for invalid_scalar in invalid_scalars:
+            with self.assertRaises(ValueError):
+                key.multiply(invalid_scalar)  # type: ignore[arg-type]
+            with self.assertRaises(ValueError):
+                pub.multiply(invalid_scalar)  # type: ignore[arg-type]
+
+        with self.assertRaises(ValueError):
+            CPubKey(b'\x00').multiply(one)
+
     def test_invalid_key(self) -> None:
         with self.assertRaises(ValueError):
             CKey(b'\x00'*32)
