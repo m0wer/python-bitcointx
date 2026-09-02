@@ -14,7 +14,7 @@
 from io import BytesIO
 import unittest
 import base64
-from typing import Optional, Set
+from typing import Callable, Dict, List, Optional, Set, Tuple
 from collections import OrderedDict
 
 from bitcointx import ChainParams
@@ -35,6 +35,7 @@ from bitcointx.core.serialize import (
 )
 from bitcointx.core.psbt import (
     PartiallySignedTransaction, PSBT_Input, PSBT_KeyDerivationInfo,
+    PSBT_UnknownTypeData,
     PSBT_ProprietaryTypeData, read_psbt_keymap, stream_serialize_field,
     MAX_PSBT_MAP_ENTRIES, PSBT_PROPRIETARY_TYPE, PSBT_GlobalKeyType,
     PSBT_InKeyType
@@ -54,9 +55,15 @@ class Test_PSBT(unittest.TestCase):
             f.write(b'\x00')
             return f.getvalue()
 
-        def read_map(data: bytes) -> tuple:
-            unknown_fields = []
-            proprietary_fields = OrderedDict()
+        def read_map(data: bytes) -> Tuple[
+            List[Tuple[PSBT_GlobalKeyType, bytes, bytes]],
+            Dict[bytes, List[PSBT_ProprietaryTypeData]],
+            List[PSBT_UnknownTypeData],
+        ]:
+            unknown_fields: List[PSBT_UnknownTypeData] = []
+            proprietary_fields: Dict[
+                bytes, List[PSBT_ProprietaryTypeData]
+            ] = OrderedDict()
             keymap = read_psbt_keymap(
                 BytesIO(data), set(), PSBT_GlobalKeyType,
                 proprietary_fields, unknown_fields)
@@ -431,7 +438,7 @@ class Test_PSBT(unittest.TestCase):
         amount = 50_000
 
         def make_psbt(script_pubkey: CScript, *, is_witness: bool,
-                      partial_sigs: OrderedDict,
+                      partial_sigs: Dict[CPubKey, bytes],
                       sighash_type: Optional[int] = None,
                       witness_script: Optional[CScript] = None
                       ) -> PartiallySignedTransaction:
@@ -454,7 +461,7 @@ class Test_PSBT(unittest.TestCase):
             return psbt
 
         def assert_not_finalized(psbt: PartiallySignedTransaction,
-                                 partial_sigs: OrderedDict) -> None:
+                                 partial_sigs: Dict[CPubKey, bytes]) -> None:
             psbt_input = psbt.inputs[0]
             self.assertEqual(psbt_input.partial_sigs, partial_sigs)
             self.assertFalse(psbt_input.final_script_sig)
@@ -518,16 +525,18 @@ class Test_PSBT(unittest.TestCase):
         sighash = witness_script.sighash(
             psbt.unsigned_tx, 0, SIGHASH_ALL, amount=amount,
             sigversion=SIGVERSION_WITNESS_V0)
-        partial_sigs = psbt.inputs[0].partial_sigs
-        partial_sigs[keys[0].pub] = keys[0].sign(sighash) + bytes([SIGHASH_ALL])
-        partial_sigs[keys[1].pub] = keys[1].sign(sighash) + bytes([SIGHASH_ALL])
-        partial_sigs[keys[2].pub] = bad_sig
+        multisig_partial_sigs = psbt.inputs[0].partial_sigs
+        multisig_partial_sigs[keys[0].pub] = \
+            keys[0].sign(sighash) + bytes([SIGHASH_ALL])
+        multisig_partial_sigs[keys[1].pub] = \
+            keys[1].sign(sighash) + bytes([SIGHASH_ALL])
+        multisig_partial_sigs[keys[2].pub] = bad_sig
 
         with self.assertRaisesRegex(
             ValueError, 'partial signature for input at index 0, pubkey'
         ):
             psbt.sign(KeyStore())
-        assert_not_finalized(psbt, partial_sigs)
+        assert_not_finalized(psbt, multisig_partial_sigs)
 
     def test_convert_to_witness_utxo(self) -> None:
         # PSBT with inputs[0].utxo given as CTransaction, but it has
@@ -772,10 +781,13 @@ class Test_PSBT(unittest.TestCase):
             PSBT_Input(utxo=prev_tx, index=0).merge(
                 make_witness_input(spent_txout))
 
-        for first, second in (
+        merge_pairs: Tuple[
+            Tuple[Callable[[], PSBT_Input], Callable[[], PSBT_Input]], ...
+        ] = (
             (make_full_input, lambda: make_witness_input(wrong_txout)),
             (lambda: make_witness_input(wrong_txout), make_full_input),
-        ):
+        )
+        for first, second in merge_pairs:
             with self.subTest(first=first.__name__):
                 first_psbt = PartiallySignedTransaction(
                     unsigned_tx=unsigned_tx, inputs=[first()],
@@ -784,13 +796,15 @@ class Test_PSBT(unittest.TestCase):
                     unsigned_tx=unsigned_tx, inputs=[second()],
                     relaxed_sanity_checks=True)
                 with self.assertRaisesRegex(
-                    ValueError, 'corresponding output in non-witness utxo'):
+                        ValueError,
+                        'corresponding output in non-witness utxo'):
                     first_psbt.combine(second_psbt)
 
-        for first, second in (
+        merge_pairs = (
             (make_full_input, lambda: make_witness_input(spent_txout)),
             (lambda: make_witness_input(spent_txout), make_full_input),
-        ):
+        )
+        for first, second in merge_pairs:
             with self.subTest(first=first.__name__):
                 first_psbt = PartiallySignedTransaction(
                     unsigned_tx=unsigned_tx, inputs=[first()],
