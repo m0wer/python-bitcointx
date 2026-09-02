@@ -200,7 +200,7 @@ class Test_Threading(unittest.TestCase):
             f3 = asyncio.ensure_future(async_regtest())
             await asyncio.gather(f1, f2, f3)
 
-        asyncio.get_event_loop().run_until_complete(go())
+        asyncio.run(go())
 
         self.assertEqual(set(finished_successfully),
                          set(['mainnet', 'testnet', 'regtest']))
