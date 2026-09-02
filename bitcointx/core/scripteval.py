@@ -1141,6 +1141,12 @@ def VerifyScript(scriptSig: CScript, scriptPubKey: CScript,
 
     inIdx        - Index of the transaction input containing scriptSig
 
+    flags        - SCRIPT_VERIFY_* flags to apply. If omitted, standard flags
+                   that this interpreter does not implement are silently
+                   excluded. Supplying an unhandled flag explicitly raises
+                   VerifyScriptError. This is not a complete standard-policy
+                   or consensus verifier.
+
     Raises a ValidationError subclass if the validation fails.
     """
 
