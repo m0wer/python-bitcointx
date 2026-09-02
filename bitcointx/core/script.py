@@ -122,7 +122,8 @@ class SIGHASH_Type(int):
     # The type of 'other' is intentionally incompatible wit supertype 'int'
     # because we do not want that or-ing with anything but bitflag type
     # to produce SIGHASH_Type result.
-    def __or__(self,  # type: ignore
+    def __or__(  # type: ignore[override]
+               self,
                other: 'SIGHASH_Bitflag_Type'
                ) -> 'SIGHASH_Type':
         if self != int(SIGHASH_ANYONECANPAY) and other != SIGHASH_ANYONECANPAY:
@@ -836,7 +837,9 @@ class CScript(bytes, ScriptCoinClass, next_dispatch_final=True):
 
     # This 'cooked' iteration is not compatible with supertype 'bytes',
     # thus we need this typing: ignore
-    def __iter__(self) -> Generator[Union[CScriptOp, int, bytes],  # type: ignore
+    def __iter__(  # type: ignore[override]
+        self
+    ) -> Generator[Union[CScriptOp, int, bytes],
                                     None, None]:
         """'Cooked' iteration
 

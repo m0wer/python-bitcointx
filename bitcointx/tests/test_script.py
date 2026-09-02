@@ -14,7 +14,7 @@
 import os
 import unittest
 
-from typing import List, Any, Union
+from typing import List, Any, Union, cast
 
 from bitcointx.core import (
     x, b2x,
@@ -29,6 +29,7 @@ from bitcointx.core.script import (
     OP_INVALIDOPCODE, OP_CHECKMULTISIG, OP_DROP,
     DATA, NUMBER, OPCODE,
     SIGHASH_ALL, SIGHASH_SINGLE, SIGHASH_Type, SIGVERSION_BASE,
+    SIGVERSION_Type,
     SIGVERSION_TAPROOT,
     SIGVERSION_WITNESS_V0, SignatureHashSchnorr,
     IsLowDERSignature, parse_standard_multisig_redeem_script,
@@ -125,7 +126,9 @@ class Test_CScript(unittest.TestCase):
             # unknown sigversion
             spk_segwit.sighash(tx, 0, SIGHASH_ALL,
                                amount=spent_amount,
-                               sigversion=SIGVERSION_WITNESS_V0 + 1)  # type: ignore
+                               sigversion=cast(
+                                   SIGVERSION_Type,
+                                   SIGVERSION_WITNESS_V0 + 1))
 
         assert spk_segwit.is_witness_scriptpubkey()
         assert spk_segwit.witness_version() == 0

@@ -712,12 +712,13 @@ class CBitcoinTxIn(CTxIn, CoreBitcoinClass):
     to_immutable: ClassVar[Callable[['CBitcoinTxIn'], 'CBitcoinTxIn']]
 
 
-class CBitcoinMutableTxIn(CBitcoinTxIn,  # type: ignore
+class CBitcoinMutableTxIn(CBitcoinTxIn,
                           CMutableTxIn, mutable_of=CBitcoinTxIn):
     """A mutable Bitcoin TxIn"""
     __slots_: List[str] = []
 
     prevout: WriteableField[CBitcoinMutableOutPoint]  # type: ignore
+    scriptSig: WriteableField[script.CBitcoinScript]  # type: ignore[assignment]
 
 
 T_CTxOut = TypeVar('T_CTxOut', bound='CTxOut')

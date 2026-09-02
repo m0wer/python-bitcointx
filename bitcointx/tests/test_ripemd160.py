@@ -47,4 +47,3 @@ class Test_RIPEMD160(unittest.TestCase):
         """Public entry point and pure-Python fallback agree byte for byte."""
         for msg, _hexout in _VECTORS:
             self.assertEqual(ripemd160(msg), _ripemd160_pure(msg))
-

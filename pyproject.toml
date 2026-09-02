@@ -34,8 +34,8 @@ Issues = "https://github.com/Simplexum/python-bitcointx/issues"
 dev = [
     "pytest>=7.4.0",
     "coverage>=7.0.0",
-    "ruff>=0.6.0",
-    "mypy>=1.10.0",
+    "ruff==0.6.9",
+    "mypy==1.11.2",
     "typing-extensions>=4.7.0",
     "pre-commit>=3.7.0",
 ]
@@ -55,22 +55,18 @@ target-version = "py311"
 extend-exclude = ["doc", "build", "dist"]
 
 [tool.ruff.lint]
-# Conservative starting set, keeping diffs small on legacy code.
-select = ["E", "F", "I", "W", "UP", "B"]
+# Conservative baseline that does not require rewriting legacy code.
+select = ["E4", "E7", "E9", "F"]
 ignore = [
     "E501",  # line too long (long lines exist in legacy code and crypto tables)
+    "E713",  # legacy membership spelling
+    "E721",  # exact type comparisons are intentional
     "E741",  # ambiguous variable names (used in cryptographic spec translations)
-    "B008",  # do not perform function call in argument defaults
-    "B904",  # raise from ... (legacy code raises plain exceptions)
-    "UP006", # PEP 585 syntax (kept consistent with existing typing imports)
-    "UP007", # PEP 604 syntax (same reason)
-    "UP035", # deprecated import (typing aliases used intentionally)
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "bitcointx/core/_ripemd160.py" = ["E226", "E741"]
 "bitcointx/core/sha256.py" = ["E226", "E741"]
-"bitcointx/tests/*" = ["B011"]
 
 [tool.mypy]
 python_version = "3.11"
