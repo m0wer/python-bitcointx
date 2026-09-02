@@ -14,7 +14,7 @@
 from io import BytesIO
 import unittest
 import base64
-from typing import Set
+from typing import Optional, Set
 from collections import OrderedDict
 
 from bitcointx import ChainParams
@@ -23,9 +23,10 @@ from bitcointx.core import (
     x, lx, b2x, CTransaction, CTxOut, CMutableTxOut, CTxIn, COutPoint,
     coins_to_satoshi, CoreCoinParams
 )
-from bitcointx.core.key import CPubKey, KeyStore, BIP32Path
+from bitcointx.core.key import CKey, CPubKey, KeyStore, BIP32Path
 from bitcointx.core.script import (
-    SIGHASH_ALL, CScript, OP_CHECKMULTISIG,
+    SIGHASH_ALL, SIGHASH_NONE, SIGVERSION_WITNESS_V0, CScript,
+    OP_CHECKMULTISIG,
     parse_standard_multisig_redeem_script, standard_witness_v0_scriptpubkey,
     CScriptWitness
 )
@@ -426,6 +427,108 @@ class Test_PSBT(unittest.TestCase):
         T('70736274ff01009a020000000258e87a21b56daf0c23be8e7070456c336f7cbaa5c8757924f545887bb2abdd750000000000ffffffff838d0427d0ec650a68aa46bb0b098aea4422c071b2ca78352a077959d07cea1d0100000000ffffffff0270aaf00800000000160014d85c2b71d0060b09c9886aeb815e50991dda124d00e1f5050000000016001400aea9a2e5f0f876a588df5546e8742d1d87008f00000000000100bb0200000001aad73931018bd25f84ae400b68848be09db706eac2ac18298babee71ab656f8b0000000048473044022058f6fc7c6a33e1b31548d481c826c015bd30135aad42cd67790dab66d2ad243b02204a1ced2604c6735b6393e5b41691dd78b00f0c5942fb9f751856faa938157dba01feffffff0280f0fa020000000017a9140fb9463421696b82c833af241c78c17ddbde493487d0f20a270100000017a91429ca74f8a08f81999428185c97b5d852e4063f618765000000220202dab61ff49a14db6a7d02b0cd1fbb78fc4b18312b5b4e54dae4dba2fbfef536d7483045022100f61038b308dc1da865a34852746f015772934208c6d24454393cd99bdf2217770220056e675a675a6d0a02b85b14e5e29074d8a25a9b5760bea2816f661910a006ea01010304010000000104475221029583bf39ae0a609747ad199addd634fa6108559d6c5cd39b4c2183f1ab96e07f2102dab61ff49a14db6a7d02b0cd1fbb78fc4b18312b5b4e54dae4dba2fbfef536d752ae2206029583bf39ae0a609747ad199addd634fa6108559d6c5cd39b4c2183f1ab96e07f10d90c6a4f000000800000008000000080220602dab61ff49a14db6a7d02b0cd1fbb78fc4b18312b5b4e54dae4dba2fbfef536d710d90c6a4f0000008000000080010000800001012000c2eb0b0000000017a914b7f5faf40e3d40a5a459b1db3535f2b72fa921e8872202023add904f3d6dcf59ddb906b0dee23529b7ffb9ed50e5e86151926860221f0e73473044022065f45ba5998b59a27ffe1a7bed016af1f1f90d54b3aa8f7450aa5f56a25103bd02207f724703ad1edb96680b284b56d4ffcb88f7fb759eabbe08aa30f29b851383d2010103040100000001042200208c2353173743b595dfb4a07b72ba8e42e3797da74e87fe7d9d7497e3b2028903010547522103089dc10c7ac6db54f91329af617333db388cead0c231f723379d1b99030b02dc21023add904f3d6dcf59ddb906b0dee23529b7ffb9ed50e5e86151926860221f0e7352ad2206023add904f3d6dcf59ddb906b0dee23529b7ffb9ed50e5e86151926860221f0e7310d90c6a4f000000800000008003000080220603089dc10c7ac6db54f91329af617333db388cead0c231f723379d1b99030b02dc10d90c6a4f00000080000000800200008000220203a9a4c37f5996d3aa25dbac6b570af0650394492942460b354753ed9eeca5877110d90c6a4f000000800000008004000080002202027f6399757d2eff55a136ad02c684b1838b6556e5f1b6b34282a94b6b5005109610d90c6a4f00000080000000800500008000',
           'witness script for p2sh-wrapped segwit p2wpkh input at index 1 does not match the redeem script')
 
+    def test_preexisting_partial_sigs_are_verified(self) -> None:
+        amount = 50_000
+
+        def make_psbt(script_pubkey: CScript, *, is_witness: bool,
+                      partial_sigs: OrderedDict,
+                      sighash_type: Optional[int] = None,
+                      witness_script: Optional[CScript] = None
+                      ) -> PartiallySignedTransaction:
+            prev_tx = CTransaction(
+                [CTxIn(COutPoint(b'\x11' * 32, 0))],
+                [CTxOut(amount, script_pubkey)])
+            unsigned_tx = CTransaction(
+                [CTxIn(COutPoint(prev_tx.GetTxid(), 0))],
+                [CTxOut(amount - 1_000, CScript([b'destination']))])
+            psbt_input = PSBT_Input(
+                unsigned_tx=unsigned_tx,
+                utxo=prev_tx.vout[0] if is_witness else prev_tx,
+                partial_sigs=OrderedDict(),
+                sighash_type=sighash_type,
+                witness_script=witness_script,
+                index=0)
+            psbt = PartiallySignedTransaction(
+                unsigned_tx=unsigned_tx, inputs=[psbt_input])
+            psbt.inputs[0].partial_sigs.update(partial_sigs)
+            return psbt
+
+        def assert_not_finalized(psbt: PartiallySignedTransaction,
+                                 partial_sigs: OrderedDict) -> None:
+            psbt_input = psbt.inputs[0]
+            self.assertEqual(psbt_input.partial_sigs, partial_sigs)
+            self.assertFalse(psbt_input.final_script_sig)
+            self.assertFalse(psbt_input.final_script_witness)
+
+        key = CKey.from_secret_bytes(b'\x06' * 32)
+        bad_sig = b'\x30\x06\x02\x01\x01\x02\x01\x01' + bytes([SIGHASH_ALL])
+        for is_witness in (False, True):
+            with self.subTest(is_witness=is_witness):
+                script_pubkey = (
+                    standard_witness_v0_scriptpubkey(key.pub.key_id)
+                    if is_witness else
+                    P2PKHCoinAddress.from_pubkey(key.pub).to_scriptPubKey())
+                partial_sigs = OrderedDict([(key.pub, bad_sig)])
+                psbt = make_psbt(script_pubkey, is_witness=is_witness,
+                                 partial_sigs=partial_sigs)
+
+                with self.assertRaisesRegex(
+                    ValueError, 'partial signature for input at index 0, pubkey'
+                ):
+                    psbt.sign(KeyStore(key))
+                assert_not_finalized(psbt, partial_sigs)
+
+                with self.assertRaisesRegex(
+                    ValueError, 'partial signature for input at index 0, pubkey'
+                ):
+                    psbt.extract_transaction()
+                assert_not_finalized(psbt, partial_sigs)
+
+        key = CKey.from_secret_bytes(b'\x07' * 32)
+        script_pubkey = standard_witness_v0_scriptpubkey(key.pub.key_id)
+        psbt = make_psbt(script_pubkey, is_witness=True,
+                         partial_sigs=OrderedDict())
+        script_code = P2PKHCoinAddress.from_pubkey(key.pub).to_scriptPubKey()
+        sig = key.sign(script_code.sighash(
+            psbt.unsigned_tx, 0, SIGHASH_NONE, amount=amount,
+            sigversion=SIGVERSION_WITNESS_V0)) + bytes([SIGHASH_NONE])
+        psbt.inputs[0].partial_sigs[key.pub] = sig
+
+        self.assertTrue(psbt.sign(KeyStore()).is_final)
+
+        mismatched_partial_sigs = OrderedDict([(key.pub, sig)])
+        mismatched_psbt = make_psbt(
+            script_pubkey, is_witness=True,
+            partial_sigs=mismatched_partial_sigs,
+            sighash_type=SIGHASH_ALL)
+        with self.assertRaisesRegex(
+            ValueError, 'sighash type does not match the sighash type specified'
+        ):
+            mismatched_psbt.sign(KeyStore())
+        assert_not_finalized(mismatched_psbt, mismatched_partial_sigs)
+
+        keys = [CKey.from_secret_bytes(bytes([n]) * 32)
+                for n in range(8, 11)]
+        witness_script = CScript(
+            [2, keys[0].pub, keys[1].pub, keys[2].pub, 3,
+             OP_CHECKMULTISIG])
+        psbt = make_psbt(witness_script.to_p2wsh_scriptPubKey(),
+                         is_witness=True, partial_sigs=OrderedDict(),
+                         witness_script=witness_script)
+        sighash = witness_script.sighash(
+            psbt.unsigned_tx, 0, SIGHASH_ALL, amount=amount,
+            sigversion=SIGVERSION_WITNESS_V0)
+        partial_sigs = psbt.inputs[0].partial_sigs
+        partial_sigs[keys[0].pub] = keys[0].sign(sighash) + bytes([SIGHASH_ALL])
+        partial_sigs[keys[1].pub] = keys[1].sign(sighash) + bytes([SIGHASH_ALL])
+        partial_sigs[keys[2].pub] = bad_sig
+
+        with self.assertRaisesRegex(
+            ValueError, 'partial signature for input at index 0, pubkey'
+        ):
+            psbt.sign(KeyStore())
+        assert_not_finalized(psbt, partial_sigs)
+
     def test_convert_to_witness_utxo(self) -> None:
         # PSBT with inputs[0].utxo given as CTransaction, but it has
         # final_script_witness set
@@ -703,7 +806,8 @@ class Test_PSBT(unittest.TestCase):
         # Take some PSBT, fill all the fields that we know exist,
         # and check that clone() creates the same PSBT
         psbt = PartiallySignedTransaction.deserialize(x('70736274ff0100550200000001ab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40100000000feffffff018e240000000000001976a9146f4620b553fa095e721b9ee0efe9fa039cca459788ac0000000015fc0a676c6f62616c5f706678016d756c7469706c79056368696566046f616263036465660001012000e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787010416001485d13537f2e265405a34dbafa9e3dda01fb823080ffc06696e5f706678fde80377686174056672616d650afc00fe40420f0061736b077361746f736869046f616263036465660012fc076f75745f706678feffffff01636f726e05746967657213fc076f75745f706678fe000000027075707079056472697665046f6162630364656600'))
-        pub = CPubKey(x('039eff1f547a1d5f92dfa2ba7af6ac971a4bd03ba4a734b03156a256b8ad3a1ef9'))
+        key = CKey.from_secret_bytes(b'\x0b' * 32)
+        pub = key.pub
         psbt.inputs[0].witness_script = CScript([1, 2, 3])
         psbt.inputs[0].redeem_script = psbt.inputs[0].witness_script.to_p2wsh_scriptPubKey()
         assert isinstance(psbt.inputs[0].utxo, CTxOut)
@@ -711,7 +815,6 @@ class Test_PSBT(unittest.TestCase):
         psbt.set_utxo(new_utxo, index=0)
         assert isinstance(psbt.inputs[0].utxo, CMutableTxOut)
         psbt.inputs[0].utxo.scriptPubKey = psbt.inputs[0].redeem_script.to_p2sh_scriptPubKey()
-        psbt.inputs[0].partial_sigs[pub] = b'123'
         psbt.inputs[0].sighash_type = SIGHASH_ALL
         psbt.inputs[0].derivation_map[pub] = \
             PSBT_KeyDerivationInfo(x('d90c6a4f'), BIP32Path("m/0'/0'/5'"))
@@ -723,6 +826,14 @@ class Test_PSBT(unittest.TestCase):
         psbt.unsigned_tx.vout[0].scriptPubKey = psbt.outputs[0].redeem_script.to_p2sh_scriptPubKey()
         psbt.outputs[0].derivation_map[pub] = \
             PSBT_KeyDerivationInfo(x('ffffeeee'), BIP32Path("m/1'/2'/3'"))
+
+        assert isinstance(psbt.inputs[0].utxo, CTxOut)
+        sighash = psbt.inputs[0].witness_script.sighash(
+            psbt.unsigned_tx, 0, SIGHASH_ALL,
+            amount=psbt.inputs[0].utxo.nValue,
+            sigversion=SIGVERSION_WITNESS_V0)
+        psbt.inputs[0].partial_sigs[pub] = \
+            key.sign(sighash) + bytes([SIGHASH_ALL])
 
         with ChainParams('bitcoin/testnet'):
             xpriv = CCoinExtKey('tprv8ZgxMBicQKsPd9TeAdPADNnSyH9SSUUbTVeFszDE23Ki6TBB5nCefAdHkK8Fm3qMQR6sHwA56zqRmKmxnHk37JkiFzvncDqoKmPWubu7hDF')

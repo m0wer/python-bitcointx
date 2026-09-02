@@ -1010,6 +1010,39 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
         # is a supported type
         sighash_type = SIGHASH_Type(self.sighash_type or SIGHASH_ALL)
 
+        def validate_partial_sig(
+            pub: CPubKey, sig: bytes, script_for_sighash: CScript,
+            calc_sighash: Callable[[CScript, SIGHASH_Type], bytes]
+        ) -> None:
+            sig_descr = (
+                f'partial signature for input at index {self.index}, '
+                f'pubkey {b2x(pub)}')
+
+            if not sig:
+                raise ValueError(f'{sig_descr} is empty')
+
+            try:
+                partial_sig_sighash_type = SIGHASH_Type(sig[-1])
+            except ValueError as e:
+                raise ValueError(
+                    f'{sig_descr} has unsupported sighash type') from e
+
+            if (self.sighash_type is not None
+                    and partial_sig_sighash_type != self.sighash_type):
+                raise ValueError(
+                    f'{sig_descr} sighash type does not match the '
+                    f'sighash type specified for the input')
+
+            try:
+                signature_sighash = calc_sighash(
+                    script_for_sighash, partial_sig_sighash_type)
+            except ValueError as e:
+                raise ValueError(
+                    f'cannot calculate sighash for {sig_descr}') from e
+
+            if not pub.verify(signature_sighash, sig[:-1]):
+                raise ValueError(f'{sig_descr} is invalid')
+
         rds = self.redeem_script
         ws = self.witness_script
 
@@ -1043,11 +1076,12 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                     f'input at index {self.index} specified as '
                     f'witness UTXO, but has non-witness scriptPubKey')
 
-            def calc_sighash(script_for_sighash: CScript) -> bytes:
+            def calc_sighash(script_for_sighash: CScript,
+                             sig_sighash_type: SIGHASH_Type) -> bytes:
                 assert self.index is not None
                 assert isinstance(utxo, CTxOut)
                 return script_for_sighash.sighash(
-                    unsigned_tx, self.index, SIGHASH_Type(sighash_type),
+                    unsigned_tx, self.index, sig_sighash_type,
                     amount=utxo.nValue,
                     sigversion=SIGVERSION_WITNESS_V0)
 
@@ -1060,7 +1094,8 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                         f'p2wpkh input at index {self.index}')
 
                 sighash = calc_sighash(
-                    standard_keyhash_scriptpubkey(s.pubkey_hash()))
+                    standard_keyhash_scriptpubkey(s.pubkey_hash()),
+                    sighash_type)
 
                 if self.partial_sigs:
                     if len(self.partial_sigs) > 1:
@@ -1073,6 +1108,10 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                             f'the pubkey in partial_sigs for p2wpkh input '
                             f'at index {self.index} does not match the '
                             f'keyhash for the input')
+                    validate_partial_sig(
+                        pub, self.partial_sigs[pub],
+                        standard_keyhash_scriptpubkey(s.pubkey_hash()),
+                        calc_sighash)
                     return self._got_single_sig(
                         pub, self.partial_sigs[pub], is_witness=True,
                         script_sig_for_witness=script_sig, finalize=finalize)
@@ -1099,7 +1138,10 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                         f'p2wpkh input at index {self.index} does not match '
                         f'the redeem script')
 
-                sighash = calc_sighash(ws)
+                sighash = calc_sighash(ws, sighash_type)
+
+                for pub, sig in self.partial_sigs.items():
+                    validate_partial_sig(pub, sig, ws, calc_sighash)
 
                 try:
                     msig_helper = complex_script_helper_factory(ws)
@@ -1143,10 +1185,11 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                     f'witness scritpubkey is found for non-witness UTXO '
                     f'at index {self.index}')
 
-            def calc_sighash(script_for_sighash: CScript) -> bytes:
+            def calc_sighash(script_for_sighash: CScript,
+                             sig_sighash_type: SIGHASH_Type) -> bytes:
                 assert self.index is not None
                 return script_for_sighash.sighash(
-                    unsigned_tx, self.index, SIGHASH_Type(sighash_type),
+                    unsigned_tx, self.index, sig_sighash_type,
                     sigversion=SIGVERSION_BASE)
 
             if spk.is_p2pkh():
@@ -1155,7 +1198,7 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                         f'redeem script is specified for p2pkh input '
                         f'at index {self.index}')
 
-                sighash = calc_sighash(spk)
+                sighash = calc_sighash(spk, sighash_type)
 
                 if self.partial_sigs:
                     if len(self.partial_sigs) > 1:
@@ -1168,6 +1211,8 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                             f'the pubkey in partial_sigs for p2pkh input '
                             f'at index {self.index} does not match the '
                             f'keyhash for the input')
+                    validate_partial_sig(pub, self.partial_sigs[pub], spk,
+                                         calc_sighash)
                     return self._got_single_sig(pub, self.partial_sigs[pub],
                                                 is_witness=False,
                                                 finalize=finalize)
@@ -1191,7 +1236,10 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                         f'redeem script for input at index {self.index} '
                         f'does not match scriptPubKey in UTXO')
 
-                sighash = calc_sighash(rds)
+                sighash = calc_sighash(rds, sighash_type)
+
+                for pub, sig in self.partial_sigs.items():
+                    validate_partial_sig(pub, sig, rds, calc_sighash)
 
                 try:
                     msig_helper = complex_script_helper_factory(rds)
