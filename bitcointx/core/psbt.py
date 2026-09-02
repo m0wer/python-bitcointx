@@ -80,6 +80,8 @@ class PSBT_BitcoinClass(PSBT_CoinClass, metaclass=PSBT_BitcoinClassDispatcher):
 
 PSBT_SEPARATOR = b'\x00'
 
+MAX_PSBT_MAP_ENTRIES = 10_000
+
 PSBT_PROPRIETARY_TYPE = 0xFC
 
 
@@ -295,10 +297,16 @@ def read_psbt_keymap(
     proprietary_fields: Dict[bytes, List[PSBT_ProprietaryTypeData]],
     unknown_fields: List[PSBT_UnknownTypeData]
 ) -> Generator[Tuple[T_KeyTypeEnum, bytes, bytes], None, None]:
+    entry_count = 0
     while True:
         key_data = BytesSerializer.stream_deserialize(f)
         if not key_data:
             return
+
+        entry_count += 1
+        if entry_count > MAX_PSBT_MAP_ENTRIES:
+            raise SerializationError(
+                f'PSBT map entry limit of {MAX_PSBT_MAP_ENTRIES} exceeded')
 
         if key_data in keys_seen:
             tellf = getattr(f, 'tell', lambda: '<untracked>')
@@ -2339,6 +2347,7 @@ class PartiallySignedBitcoinTransaction(PartiallySignedTransaction,
 activate_class_dispatcher(PSBT_BitcoinClassDispatcher)
 
 __all__ = (
+    'MAX_PSBT_MAP_ENTRIES',
     'PartiallySignedTransaction',
     'PSBT_Input',
     'PSBT_Output',

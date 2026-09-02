@@ -34,12 +34,44 @@ from bitcointx.core.serialize import (
 )
 from bitcointx.core.psbt import (
     PartiallySignedTransaction, PSBT_Input, PSBT_KeyDerivationInfo,
-    PSBT_ProprietaryTypeData, read_psbt_keymap,
-    PSBT_GlobalKeyType, PSBT_InKeyType
+    PSBT_ProprietaryTypeData, read_psbt_keymap, stream_serialize_field,
+    MAX_PSBT_MAP_ENTRIES, PSBT_PROPRIETARY_TYPE, PSBT_GlobalKeyType,
+    PSBT_InKeyType
 )
 
 
 class Test_PSBT(unittest.TestCase):
+
+    def test_psbt_keymap_entry_limit(self) -> None:
+        def make_map(field_type: int, entry_count: int) -> bytes:
+            f = BytesIO()
+            for entry_index in range(entry_count):
+                key_data = entry_index.to_bytes(2, 'little')
+                if field_type == PSBT_PROPRIETARY_TYPE:
+                    key_data = b'\x00\x00' + key_data
+                stream_serialize_field(field_type, f, key_data=key_data)
+            f.write(b'\x00')
+            return f.getvalue()
+
+        def read_map(data: bytes) -> tuple:
+            unknown_fields = []
+            proprietary_fields = OrderedDict()
+            keymap = read_psbt_keymap(
+                BytesIO(data), set(), PSBT_GlobalKeyType,
+                proprietary_fields, unknown_fields)
+            return list(keymap), proprietary_fields, unknown_fields
+
+        _, _, unknown_fields = read_map(make_map(
+            0x10, MAX_PSBT_MAP_ENTRIES))
+        self.assertEqual(len(unknown_fields), MAX_PSBT_MAP_ENTRIES)
+
+        for field_type in (0x10, PSBT_PROPRIETARY_TYPE):
+            with self.subTest(field_type=field_type):
+                with self.assertRaisesRegex(
+                    SerializationError,
+                    f'PSBT map entry limit of {MAX_PSBT_MAP_ENTRIES} exceeded'
+                ):
+                    read_map(make_map(field_type, MAX_PSBT_MAP_ENTRIES + 1))
 
     def test_psbt_input_unknown_sighash_type_range(self) -> None:
         for sighash_type in (0, 2**32 - 1):
