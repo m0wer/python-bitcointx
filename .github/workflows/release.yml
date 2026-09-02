@@ -23,7 +23,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install build tools
-        run: python -m pip install --upgrade build twine
+        run: python -m pip install build==1.6.0 setuptools==84.0.0 twine==6.2.0 wheel==0.48.0
+
+      - name: Set reproducible build timestamp
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
 
       - name: Build distributions
         run: python -m build
