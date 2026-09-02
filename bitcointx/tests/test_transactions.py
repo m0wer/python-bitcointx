@@ -261,6 +261,16 @@ class Test_CMutableTxInWitness(unittest.TestCase):
 
 
 class Test_CTransaction(unittest.TestCase):
+    def test_empty_transaction_deserialization(self) -> None:
+        tx = CTransaction()
+        self.assertEqual(CTransaction.deserialize(tx.serialize()).serialize(),
+                         tx.serialize())
+
+        tx = CTransaction.deserialize(x('02000000000078563412'))
+        self.assertEqual(tx.vin, ())
+        self.assertEqual(tx.vout, ())
+        self.assertEqual(tx.nLockTime, 0x12345678)
+
     def test_is_coinbase(self) -> None:
         tx = CMutableTransaction()
         self.assertFalse(tx.is_coinbase())

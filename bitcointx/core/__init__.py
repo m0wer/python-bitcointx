@@ -1135,6 +1135,7 @@ class CTransaction(ReprOrStrMixin, CoreCoinClass, next_dispatch_final=True):
         # In case the dummy is there, this will be read as an empty vector.
         vin = VectorSerializer.stream_deserialize(
             f, element_class=CTxIn, **kwargs)
+        vout = []
 
         flags = 0
 
