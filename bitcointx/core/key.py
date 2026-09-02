@@ -536,6 +536,9 @@ class CPubKey(bytes):
             raise RuntimeError('secp256k1 compiled without pubkey recovery functions. '
                                'recover_compact is not functional.')
 
+        if not 27 <= sig[0] <= 34:
+            return None
+
         recid = (sig[0] - 27) & 3
         compressed = ((sig[0] - 27) & 4) != 0
 

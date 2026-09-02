@@ -48,6 +48,28 @@ class Test_CPubKey(unittest.TestCase):
         T('0478d430274f8c5ec1321338151e9f27f4c676a008bdf8638d07c0b6be9ab35c71a1518063243acd4dfe96b66e3f2ec8013c8e072cd09b3834a19f81f659cc3455',
           True, True, False)
 
+    @unittest.skipIf(
+        not get_secp256k1().cap.has_pubkey_recovery,
+        'secp256k1 compiled without pubkey recovery functions'
+    )
+    def test_recover_compact_rejects_noncanonical_headers(self) -> None:
+        secret = x('5586e3531b857c5a3d7af6d512ec84161f4531b66daf2ad72a6f647e4164c8ae')
+        msg_hash = hashlib.sha256(b'compact signature header test').digest()
+        key = CKey(secret)
+        compact_sig, recid = key.sign_compact(msg_hash)
+
+        self.assertEqual(
+            CPubKey.recover_compact(msg_hash, bytes([27 + recid]) + compact_sig),
+            CKey(secret, compressed=False).pub)
+        self.assertEqual(
+            CPubKey.recover_compact(msg_hash, bytes([31 + recid]) + compact_sig),
+            key.pub)
+
+        for header in (26, 35):
+            self.assertIsNone(
+                CPubKey.recover_compact(
+                    msg_hash, bytes([header]) + compact_sig))
+
 
 class Test_CKey(unittest.TestCase):
     def test(self) -> None:
