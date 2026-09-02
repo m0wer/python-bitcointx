@@ -1,5 +1,18 @@
 # python-bitcointx release notes
 
+## v2.1.0
+
+New APIs:
+
+- Add immutable `CKeyBase.multiply()` and `CPubKey.multiply()` methods for
+  libsecp256k1-backed scalar multiplication.
+
+Maintenance changes:
+
+- Support the libsecp256k1 v0.7 `secp256k1_ec_seckey_tweak_mul` symbol while
+  retaining compatibility with the legacy `secp256k1_ec_privkey_tweak_mul`
+  spelling.
+
 ## v2.0.0
 
 Breaking changes:
