@@ -33,13 +33,33 @@ from bitcointx.core.serialize import (
     SerializationError, SerializationTruncationError, ser_read
 )
 from bitcointx.core.psbt import (
-    PartiallySignedTransaction, PSBT_KeyDerivationInfo,
+    PartiallySignedTransaction, PSBT_Input, PSBT_KeyDerivationInfo,
     PSBT_ProprietaryTypeData, read_psbt_keymap,
     PSBT_GlobalKeyType, PSBT_InKeyType
 )
 
 
 class Test_PSBT(unittest.TestCase):
+
+    def test_psbt_input_unknown_sighash_type_range(self) -> None:
+        for sighash_type in (0, 2**32 - 1):
+            with self.subTest(sighash_type=sighash_type):
+                psbt_input = PSBT_Input(
+                    sighash_type=sighash_type,
+                    allow_unknown_sighash_types=True)
+                self.assertEqual(psbt_input.sighash_type, sighash_type)
+
+        for sighash_type in (-1, 2**32):
+            with self.subTest(sighash_type=sighash_type):
+                with self.assertRaisesRegex(ValueError,
+                                            'Sighash type out of range'):
+                    PSBT_Input(
+                        sighash_type=sighash_type,
+                        allow_unknown_sighash_types=True)
+
+        with self.assertRaisesRegex(ValueError,
+                                    'not a supported SIGHASH type'):
+            PSBT_Input(sighash_type=0)
 
     def test_invalid_psbt(self) -> None:
         def deserialize(hex_data: str) -> PartiallySignedTransaction:

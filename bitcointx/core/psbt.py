@@ -464,7 +464,7 @@ class PSBT_Input(PSBT_CoinClass, next_dispatch_final=True):
                 # SIGHASH_Type.__init__() will enforce that the value
                 # is a supported type
                 sighash_type = SIGHASH_Type(sighash_type)
-            elif 2**32 <= sighash_type < 0:
+            elif not (0 <= sighash_type < 2**32):
                 raise ValueError(descr('Sighash type out of range '))
 
         self.sighash_type = sighash_type
