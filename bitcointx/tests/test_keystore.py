@@ -22,6 +22,32 @@ from bitcointx.wallet import CCoinKey, CCoinExtKey, CCoinExtPubKey
 
 
 class Test_KeyStore(unittest.TestCase):
+    def test_derivation_lookup_checks_all_matching_prefix_buckets(self) -> None:
+        master_xpriv = CCoinExtKey.from_seed(b'\x01' * 32)
+        first_xpriv = master_xpriv.derive(0)
+        target_xpriv = CCoinExtKey.from_bytes(
+            bytes(CCoinExtKey.from_seed(b'\x02' * 32).derive_path('1/2')))
+        target_xpriv.assign_derivation_info(
+            KeyDerivationInfo(master_xpriv.fingerprint, BIP32Path('m/0/1')))
+        lookup_derivation = KeyDerivationInfo(
+            master_xpriv.fingerprint, BIP32Path('m/0/1/2'))
+
+        target_priv = target_xpriv.derive(2).priv
+        priv_store = KeyStore(first_xpriv, target_xpriv,
+                              require_path_templates=False)
+        self.assertEqual(
+            priv_store.get_privkey(target_priv.pub.key_id, lookup_derivation),
+            target_priv)
+
+        first_xpub = first_xpriv.neuter()
+        target_xpub = target_xpriv.neuter()
+        target_pub = target_xpub.derive(2).pub
+        pub_store = KeyStore(first_xpub, target_xpub,
+                             require_path_templates=False)
+        self.assertEqual(
+            pub_store.get_pubkey(target_pub.key_id, lookup_derivation),
+            target_pub)
+
     def test(self) -> None:
         xpriv1 = CCoinExtKey('xprv9s21ZrQH143K4TFwadu5VoGfAChTWXUw49YyTWE8SRqC9ZC9AQpHspzgbAcScTmC4MURiMT7pmCbci5oKbWijJmARiUeRiLXYehCtsoVdYf')
         xpriv2 = CCoinExtKey('xprv9uZ4jKNZFfGEQTTunEuy2cLQMckzuy5saCmiKuxYJgHX5pGFCx3KQ8mTkSfuLNaWGNQ9LKCg5YzUihxoQv493ErnkcaS3q1udx9X8WZbwZc')

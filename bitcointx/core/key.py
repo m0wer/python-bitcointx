@@ -1920,7 +1920,6 @@ class KeyStore:
                                     full_path_indexes=indexes,
                                     partial_path_indexes=indexes_tail)
                                 return xpub.pub
-                    break
 
         return None
 
@@ -1943,7 +1942,6 @@ class KeyStore:
                                 full_path_indexes=indexes,
                                 partial_path_indexes=indexes_tail)
                             return xpriv.priv
-                    break
 
         return None
 
