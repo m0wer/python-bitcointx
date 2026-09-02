@@ -1542,7 +1542,7 @@ def SignatureHashSchnorr(
         f.write(struct.pack('<I', inIdx))
 
     if annex_hash is not None:
-        BytesSerializer.stream_serialize(annex_hash, f)
+        f.write(annex_hash)
 
     if output_type == SIGHASH_SINGLE:
         outIdx = inIdx
