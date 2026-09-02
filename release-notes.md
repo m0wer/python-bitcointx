@@ -1,5 +1,43 @@
 # python-bitcointx release notes
 
+## v2.0.0
+
+Breaking changes:
+
+- Python 3.11 or newer is now required.
+- `VerifyScript()` now rejects `SCRIPT_VERIFY_TAPROOT` as unsupported instead
+  of silently accepting unverified witness-v1 programs. Taproot verification
+  remains available through `ConsensusVerifyScript()` when supported by the
+  loaded `libbitcoinconsensus` library.
+- Base58 decoding now rejects strings longer than 128 characters.
+- PSBT maps now reject more than 10,000 entries per map.
+
+Security and correctness fixes:
+
+- Correct BIP143 `OP_CODESEPARATOR` handling for witness-v0 signature hashes.
+- Correct BIP341 annex hashing and `SIGHASH_SINGLE` output bounds checks.
+- Encode false script results as the empty vector and enforce the 1,000-item
+  stack limit after data pushes.
+- Validate merged PSBT witness UTXOs against the exact spent output.
+- Verify existing PSBT partial signatures before finalizing P2PKH, P2WPKH,
+  P2SH multisig, and P2WSH multisig inputs.
+- Bound PSBT sighash types and key-map entry counts.
+- Reject malformed empty transaction parsing states, noncanonical compact
+  signature headers, and noncanonical WIF compression markers.
+- Copy mutable byte inputs held by immutable serializable objects.
+- Continue key derivation lookup across all matching prefix buckets.
+
+Maintenance changes:
+
+- Support libsecp256k1 v0.7 and newer seckey symbol names while retaining
+  compatibility with v0.4.
+- Use `hashlib` for RIPEMD-160 when available, with the pure-Python fallback
+  retained and tested.
+- Adopt `pyproject.toml`, reproducible development checks, Python 3.11 through
+  3.13 CI, and libsecp256k1 v0.4/v0.7 CI coverage.
+- Build, validate, attest, and attach source and wheel distributions when a
+  GitHub Release is published.
+
 ## v1.1.5
 
 Breaking change (in case any code has depended on incorrect behavior):
