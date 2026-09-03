@@ -1,5 +1,13 @@
 # python-bitcointx release notes
 
+## v2.1.1
+
+Compatibility fixes:
+
+- Support libsecp256k1 v0.8, which removed the deprecated
+  `secp256k1_schnorrsig_sign` alias in favor of
+  `secp256k1_schnorrsig_sign32`.
+
 ## v2.1.0
 
 New APIs:
