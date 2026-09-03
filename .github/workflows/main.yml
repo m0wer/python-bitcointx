@@ -34,9 +34,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         python-version: ["3.11", "3.12", "3.13", "3.14"]
-        # libsecp256k1 v0.4.0 is the documented reference; v0.7.0 is included
-        # to ensure our compatibility shim (issue #88) keeps working.
-        libsecp256k1-version: ["v0.4.0", "v0.7.0"]
+        # Cover the legacy ABI, seckey renames, and removal of the deprecated
+        # secp256k1_schnorrsig_sign alias respectively.
+        libsecp256k1-version: ["v0.4.0", "v0.7.0", "v0.8.0"]
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

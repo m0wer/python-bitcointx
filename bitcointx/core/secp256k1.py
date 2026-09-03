@@ -119,6 +119,13 @@ class Secp256k1:
 _secp256k1: Optional[Secp256k1] = None
 
 
+def _get_schnorrsig_sign_function(lib: ctypes.CDLL) -> Optional[Any]:
+    sign_function = getattr(lib, 'secp256k1_schnorrsig_sign32', None)
+    if sign_function is None:
+        sign_function = getattr(lib, 'secp256k1_schnorrsig_sign', None)
+    return sign_function
+
+
 def get_secp256k1() -> Secp256k1:
     """Will create and initialize an instance of Secp256k1 class, and store
     it as attribute of the module this function resides in. If this attribute
@@ -273,17 +280,18 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
         lib.secp256k1_keypair_xonly_tweak_add.restype = ctypes.c_int
         lib.secp256k1_keypair_xonly_tweak_add.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
 
-    # Note that we check specifically for secp256k1_schnorrsig_sign_custom
-    # to avoid incompatibility with earlier version of libsecp256k1.
-    # Before secp256k1_schnorrsig_sign_custom was itroduced,
-    # secp256k1_schnorrsig_sign had different signature, and using it
-    # with this signature will result in segfault.
-    if getattr(lib, 'secp256k1_schnorrsig_sign_custom', None):
+    # Check for sign_custom to avoid older versions where schnorrsig_sign had
+    # an incompatible signature. v0.8 removed the deprecated schnorrsig_sign
+    # alias, so expose sign32 under the legacy attribute used by CKey.
+    schnorrsig_sign = _get_schnorrsig_sign_function(lib)
+    if (getattr(lib, 'secp256k1_schnorrsig_sign_custom', None)
+            and schnorrsig_sign is not None):
         has_schnorrsig = True
         lib.secp256k1_schnorrsig_verify.restype = ctypes.c_int
         lib.secp256k1_schnorrsig_verify.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p]
-        lib.secp256k1_schnorrsig_sign.restype = ctypes.c_int
-        lib.secp256k1_schnorrsig_sign.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]
+        schnorrsig_sign.restype = ctypes.c_int
+        schnorrsig_sign.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]
+        lib.secp256k1_schnorrsig_sign = schnorrsig_sign  # type: ignore[attr-defined]
 
     return Secp256k1_Capabilities(
         has_pubkey_recovery=has_pubkey_recovery,

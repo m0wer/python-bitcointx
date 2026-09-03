@@ -20,9 +20,8 @@ classifiers = [
 ]
 dynamic = ["version"]
 # Runtime dependencies: none. Native dependencies (loaded at runtime via ctypes):
-#   - libsecp256k1 >= 0.3.0 and < 1.0.0 (tested with 0.4.0; 0.7.0+ supported via
-#     compatibility shim that detects both the old `secp256k1_ec_privkey_*`
-#     and the new `secp256k1_ec_seckey_*` symbol names).
+#   - libsecp256k1 >= 0.3.0 and < 1.0.0 (tested with 0.4.0, 0.7.0, and 0.8.0;
+#     compatibility shims handle renamed seckey APIs and Schnorr signing APIs).
 #   - libbitcoinconsensus (optional).
 dependencies = []
 
