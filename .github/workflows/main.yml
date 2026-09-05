@@ -65,13 +65,14 @@ jobs:
             ./autogen.sh
             ./configure --disable-coverage --disable-benchmark --disable-tests \
               --disable-exhaustive-tests --enable-module-recovery \
-              --enable-module-ecdh --enable-module-schnorrsig
+              --enable-module-ecdh --enable-module-schnorrsig --enable-module-musig
             make
             sudo make install
           else
             cmake -B build -DSECP256K1_ENABLE_MODULE_RECOVERY=ON \
               -DSECP256K1_ENABLE_MODULE_ECDH=ON \
               -DSECP256K1_ENABLE_MODULE_SCHNORRSIG=ON \
+              -DSECP256K1_ENABLE_MODULE_MUSIG=ON \
               -DSECP256K1_BUILD_TESTS=OFF \
               -DSECP256K1_BUILD_BENCHMARK=OFF \
               -DSECP256K1_BUILD_EXHAUSTIVE_TESTS=OFF
