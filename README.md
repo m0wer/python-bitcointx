@@ -129,12 +129,19 @@ return `False`. Coordinators should handle this exception separately for each
 peer's contribution.
 
 **Nonce safety:** use `nonce_gen(pubkey)` for fresh operating-system randomness.
+When known, pass `privkey=`, `msg32=`, and `extra_input32=` to include the signing
+key, message, and extra input in nonce derivation. These optional inputs are
+32-byte `bytes` values; `privkey` must correspond to `pubkey`. They do not
+replace the requirement for fresh randomness.
 The optional `rand` is secret nonce-generation material, not public auxiliary
 randomness: it must be uniformly random, kept secret, and never reused, even
 after a failed or abandoned signing attempt. Fixed values in tests are not
-production examples. Each `SecNonce` is consumed on the first signing attempt,
-including failures, and cannot be copied or pickled. Do not fork a process or
-restore a memory snapshot containing live secret nonces: process copies can
+production examples. `rand` also accepts a 32-byte `bytearray`, which is wiped
+in place once input validation succeeds, including when generation fails.
+Do not share or mutate that buffer during the call. Previously supplied
+randomness is not tracked globally. Each `SecNonce` is consumed on the first
+signing attempt, including failures, and cannot be copied or pickled. Do not
+fork a process or restore a memory snapshot containing live secret nonces: process copies can
 bypass per-object single-use protection. Native secret buffers are wiped on
 consumption, but immutable Python `bytes` (including supplied randomness and
 private keys) cannot be reliably erased by this wrapper.

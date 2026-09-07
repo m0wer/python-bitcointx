@@ -443,35 +443,72 @@ def apply_xonly_tweak(ctx: KeyAggContext, tweak: bytes) -> KeyAggContext:
         _zero_buffer(aggregate_pubkey, 64)
 
 
-def nonce_gen(pubkey: bytes, rand: bytes | None = None) -> Tuple[SecNonce, bytes]:
+def nonce_gen(
+    pubkey: bytes,
+    rand: bytes | bytearray | None = None,
+    *,
+    privkey: bytes | None = None,
+    msg32: bytes | None = None,
+    extra_input32: bytes | None = None,
+) -> Tuple[SecNonce, bytes]:
     """Generate a single-use secret nonce and its 66-byte public nonce.
 
     Omit rand to use fresh operating-system randomness. If supplied, rand must
     be 32 uniformly random SECRET bytes, unique to this call even if signing
-    fails or is abandoned. It is not public auxiliary randomness. Repeating
-    it for the same pubkey repeats the nonce and can expose the private key.
-    The caller's immutable rand bytes cannot be wiped by this function.
+    fails or is abandoned. It is not public auxiliary randomness. Reusing it
+    can repeat the nonce and expose the private key.
+    Once input validation succeeds, a supplied bytearray is wiped in place,
+    even if generation fails. Do not share or mutate it during this call.
+    Immutable rand bytes cannot be wiped by this function. There is no global
+    tracking of previously supplied randomness.
+
+    Pass privkey, msg32, and extra_input32 when known to include them in nonce
+    derivation. They must be 32-byte bytes values; privkey must be a valid
+    scalar corresponding to pubkey. These inputs do not replace fresh rand.
     """
 
     secp256k1 = _require_musig()
     participant, parsed_pubkey = _parse_pubkey(secp256k1, pubkey, "pubkey")
-    random_bytes = os.urandom(32) if rand is None else _require_bytes(rand, 32, "rand")
-    session_secrand = ctypes.create_string_buffer(random_bytes, 32)
-    secnonce = ctypes.create_string_buffer(SECNONCE_SIZE)
-    pubnonce = ctypes.create_string_buffer(PUBNONCE_SIZE)
+    seed = None
+    signer_pubkey = secnonce = pubnonce = None
     success = False
     try:
+        seckey = None if privkey is None else _validate_scalar(secp256k1, privkey, "privkey")
+        message = None if msg32 is None else _require_bytes(msg32, 32, "msg32")
+        extra = None if extra_input32 is None else _require_bytes(extra_input32, 32, "extra_input32")
+        if rand is not None:
+            if not isinstance(rand, (bytes, bytearray)):
+                raise MuSig2Error("rand must be bytes or bytearray")
+            if len(rand) != 32:
+                raise MuSig2Error("rand must be exactly 32 bytes long")
+        if seckey is not None:
+            signer_pubkey = ctypes.create_string_buffer(64)
+            if (
+                secp256k1.lib.secp256k1_ec_pubkey_create(secp256k1.ctx.sign, signer_pubkey, seckey)
+                != 1
+            ):
+                raise MuSig2Error("libsecp256k1 could not derive the signer public key")
+            if _serialize_pubkey(secp256k1, signer_pubkey) != participant:
+                raise MuSig2Error("privkey does not correspond to pubkey")
+
+        if isinstance(rand, bytearray):
+            seed = rand
+        else:
+            seed = bytearray(os.urandom(32) if rand is None else rand)
+        session_secrand = (ctypes.c_char * 32).from_buffer(seed)
+        secnonce = ctypes.create_string_buffer(SECNONCE_SIZE)
+        pubnonce = ctypes.create_string_buffer(PUBNONCE_SIZE)
         if (
             secp256k1.lib.secp256k1_musig_nonce_gen(
                 secp256k1.ctx.sign,
                 secnonce,
                 pubnonce,
                 session_secrand,
-                None,
+                seckey,
                 parsed_pubkey,
+                message,
                 None,
-                None,
-                None,
+                extra,
             )
             != 1
         ):
@@ -481,10 +518,14 @@ def nonce_gen(pubkey: bytes, rand: bytes | None = None) -> Tuple[SecNonce, bytes
         success = True
         return result, serialized
     finally:
-        _zero_buffer(session_secrand, 32)
+        if seed is not None:
+            seed[:] = b"\x00" * 32
         _zero_buffer(parsed_pubkey, 64)
-        _zero_buffer(pubnonce, PUBNONCE_SIZE)
-        if not success:
+        if signer_pubkey is not None:
+            _zero_buffer(signer_pubkey, 64)
+        if pubnonce is not None:
+            _zero_buffer(pubnonce, PUBNONCE_SIZE)
+        if not success and secnonce is not None:
             _zero_buffer(secnonce, SECNONCE_SIZE)
 
 
