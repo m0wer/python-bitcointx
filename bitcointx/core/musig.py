@@ -304,10 +304,11 @@ class SecNonce:
                 raise MuSig2Error("MuSig2 secret nonce has already been consumed")
             self.__used = True
 
-            keypair = ctypes.create_string_buffer(96)
-            signer_pubkey = ctypes.create_string_buffer(64)
-            partial_sig = ctypes.create_string_buffer(PARTIAL_SIG_SIZE)
+            keypair = signer_pubkey = partial_sig = None
             try:
+                keypair = ctypes.create_string_buffer(96)
+                signer_pubkey = ctypes.create_string_buffer(64)
+                partial_sig = ctypes.create_string_buffer(PARTIAL_SIG_SIZE)
                 secp256k1 = _require_musig()
                 if not isinstance(session, Session):
                     raise MuSig2Error("session must be a MuSig2 Session")
@@ -343,10 +344,13 @@ class SecNonce:
                     raise MuSig2Error("libsecp256k1 MuSig2 partial signing failed")
                 return _serialize_partial_sig(secp256k1, partial_sig)
             finally:
-                _zero_buffer(partial_sig, PARTIAL_SIG_SIZE)
-                _zero_buffer(signer_pubkey, 64)
-                _zero_buffer(keypair, 96)
                 _zero_buffer(self.__buffer, SECNONCE_SIZE)
+                if partial_sig is not None:
+                    _zero_buffer(partial_sig, PARTIAL_SIG_SIZE)
+                if signer_pubkey is not None:
+                    _zero_buffer(signer_pubkey, 64)
+                if keypair is not None:
+                    _zero_buffer(keypair, 96)
 
 
 def key_agg(pubkeys: Sequence[bytes]) -> KeyAggContext:
