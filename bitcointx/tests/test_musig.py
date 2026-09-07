@@ -254,6 +254,11 @@ class TestMuSig2(unittest.TestCase):
         with self.assertRaises(MuSig2Error):
             partial_sig_verify(b"\xff" * 32, pubnonce_one, pubkey, session)
 
+    def test_well_formed_invalid_partial_signature_returns_false(self) -> None:
+        _, pubkeys, _, session_data, pubnonce, _ = self._two_party_session()
+        session, _, _ = session_data
+        self.assertFalse(partial_sig_verify(bytes(32), pubnonce, pubkeys[0], session))
+
     def test_secret_nonce_is_single_use_and_nonserializable(self) -> None:
         keys, pubkeys, _, session_data, _, _ = self._two_party_session()
         session, secnonce_one, _ = session_data
