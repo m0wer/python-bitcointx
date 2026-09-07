@@ -15,6 +15,8 @@ a focus on correctness, consistency, and developer ergonomics.
 * Some API have changed and may be not compatible with old code (see below)
 * libsecp256k1 is used for signing and verifying.
   Signing by libsecp256k1 is deterministic, per RFC6979.
+* Native BIP327 MuSig2 support is available when libsecp256k1 is built with
+  its `musig` module (enabled by default since v0.6.0); it does not use a Python backend.
 * Support for PSBT (BIP174 Partially-signed transactions)
 * HD keys support
 * Easier to build code that supports and interacts with other bitcoin-based blockchains
@@ -38,17 +40,34 @@ the library and v1.0.0 release in particular, and also has some code examples.
 ## Requirements
 
 - Python >= 3.11
-- [libsecp256k1](https://github.com/bitcoin-core/secp256k1)
+- [libsecp256k1](https://github.com/bitcoin-core/secp256k1) >= 0.3.0, < 1.0.0
 - [libbitcoinconsensus](https://github.com/bitcoin/bitcoin/blob/master/doc/shared-libraries.md) (optional, for consensus-compatible script verification)
 
-Tests use the following libsecp256k1 versions:
+Native feature requirements within that supported version range:
+
+| Feature | Minimum libsecp256k1 | Required modules |
+| --- | --- | --- |
+| ECDSA and ordinary key operations | 0.3.0 | Core library |
+| Taproot keys/tweaks and BIP340 Schnorr signing/verification | 0.3.0 | `extrakeys`, `schnorrsig` |
+| BIP327 MuSig2 | 0.6.0 | `musig` (also enables `schnorrsig` and `extrakeys`) |
+
+The Taproot primitives were already present in upstream v0.2.0, but this
+package's supported baseline is v0.3.0. ECDH and recoverable ECDSA signatures
+additionally require the `ecdh` and `recovery` modules, respectively.
+
+CI tests use the following libsecp256k1 versions:
 
 [//]: # (!LIBSECP256K1_VERSION_MARKER_DO_NOT_MOVE_OR_EDIT! this marker is used by automatic tests to extract the version that is in the following line from this README.md, and use it to run tests with this specific version of libsecp256k1)
 `v0.4.0`, `v0.7.0`, and `v0.8.0`
 
-Libsecp256k1 is not linked as a git submodule in python-bitcointx git repository, because python-bitcointx
-can still be used with other versions of libsecp256k1 as long as experimental modules with unstable ABI
-of are not used, or are compatible with the vesion listed above.
+MuSig2 tests run only when the loaded library provides the module; v0.4.0
+covers compatibility without MuSig2. The bindings support the v0.8.0 removal
+of the deprecated `secp256k1_schnorrsig_sign` symbol by using `sign32`.
+
+Libsecp256k1 is loaded dynamically, not bundled or installed by pip. Forks and
+experimental builds must provide a compatible ABI, not just matching symbol
+names. Native opaque objects must not be persisted or exchanged between
+library versions or platforms.
 
 While allowing dynamic linkage with libsecp256k1 adds these complications, it is at the same time allows
 more flexibility for advanced uses. For example, one can use libsecp256k1-zkp instead of libsecp256k1 to
@@ -57,6 +76,75 @@ have access to zero-knowledge-proof related functions, as is done by python-elem
 For best results, use one of the versions listed above, as these are the versions that python-bitcointx automatic tests
 use to build libsecp256k1. Then make sure that this version of the library is loaded by python-bitcointx,
 by using `bitcointx.set_custom_secp256k1_path()` or `LD_LIBRARY_PATH ` environment variable.
+
+### MuSig2 in Distribution Packages
+
+MuSig2 was [introduced in libsecp256k1 v0.6.0](https://github.com/bitcoin-core/secp256k1/blob/v0.6.0/CHANGELOG.md).
+It is enabled by default in both upstream
+[CMake](https://github.com/bitcoin-core/secp256k1/blob/v0.6.0/CMakeLists.txt)
+and [Autotools](https://github.com/bitcoin-core/secp256k1/blob/v0.6.0/configure.ac).
+An explicit build can use `-DSECP256K1_ENABLE_MODULE_MUSIG=ON` with CMake or
+`--enable-module-musig` with Autotools where available.
+
+Do not assume every distribution package has MuSig2. Examples checked in
+September 2026 (stock packages, excluding backports and third-party builds):
+
+| Distribution | libsecp256k1 version | MuSig2 |
+| --- | --- | --- |
+| [Debian 13 (trixie)](https://tracker.debian.org/pkg/libsecp256k1) | 0.5.0-2 | Unavailable in this upstream version |
+| [Ubuntu 24.04 LTS](https://packages.ubuntu.com/noble/libsecp256k1-dev) | 0.2.0-2 | Unavailable; also below this package's supported baseline |
+| [Ubuntu 26.04 LTS](https://git.launchpad.net/ubuntu/+source/libsecp256k1/tree/debian/rules?h=applied/ubuntu/resolute) | 0.7.0-2 | Enabled by the upstream default |
+| [Fedora 44](https://packages.fedoraproject.org/pkgs/libsecp256k1/libsecp256k1-devel/fedora-44.html) | 0.6.0-4.fc44 | Enabled by the upstream default |
+
+Check the library actually loaded by Python, not just the installed headers:
+
+```python
+from bitcointx.core.secp256k1 import get_secp256k1
+
+secp = get_secp256k1()
+print(secp.cap.has_xonly_pubkeys, secp.cap.has_schnorrsig, secp.cap.has_musig)
+```
+
+### Taproot and MuSig2 Scope
+
+Taproot support includes x-only keys, Schnorr signatures, P2TR addresses,
+signature hashes, and `TaprootScriptTree`. As discussed in
+[issue #57](https://github.com/Simplexum/python-bitcointx/issues/57), this is
+not complete Taproot support: `core.psbt` does not implement Taproot input
+signing or BIP371-aware signature combining, and `VerifyScript` does not
+validate Taproot spends.
+
+`bitcointx.core.musig` provides low-level BIP327 key/nonce aggregation, x-only
+tweaks, and partial signing/verification for 32-byte message hashes. It does
+not implement plain EC tweaks, arbitrary-length messages, a signing transport,
+or MuSig2 PSBT coordination. Construct opaque contexts, sessions, and secret
+nonces through `key_agg`, `get_session`, and `nonce_gen`, not their constructors.
+Callers must agree on participant order, derive TapTweak hashes according to
+BIP341, and verify the final signature with `XOnlyPubKey.verify_schnorr`.
+Partial signature aggregation alone does not verify the result. Verify your
+own partial signature before sharing it, as recommended by libsecp256k1.
+`partial_sig_verify` raises `MuSig2Error` for malformed contributions or an
+invalid session argument; well-formed contributions that fail verification
+return `False`. Coordinators should handle this exception separately for each
+peer's contribution.
+
+**Nonce safety:** use `nonce_gen(pubkey)` for fresh operating-system randomness.
+When known, pass `privkey=`, `msg32=`, and `extra_input32=` to include the signing
+key, message, and extra input in nonce derivation. These optional inputs are
+32-byte `bytes` values; `privkey` must correspond to `pubkey`. They do not
+replace the requirement for fresh randomness.
+The optional `rand` is secret nonce-generation material, not public auxiliary
+randomness: it must be uniformly random, kept secret, and never reused, even
+after a failed or abandoned signing attempt. Fixed values in tests are not
+production examples. `rand` also accepts a 32-byte `bytearray`, which is wiped
+in place once input validation succeeds, including when generation fails.
+Do not share or mutate that buffer during the call. Previously supplied
+randomness is not tracked globally. Each `SecNonce` is consumed on the first
+signing attempt, including failures, and cannot be copied or pickled. Do not
+fork a process or restore a memory snapshot containing live secret nonces: process copies can
+bypass per-object single-use protection. Native secret buffers are wiped on
+consumption, but immutable Python `bytes` (including supplied randomness and
+private keys) cannot be reliably erased by this wrapper.
 
 ## Installation
 
@@ -81,6 +169,7 @@ consensus critical and non-consensus-critical.
     bitcointx.core            - Basic core definitions, datastructures, and
                                 (context-independent) validation
     bitcointx.core.key        - ECC keys, BIP32Paths
+    bitcointx.core.musig      - Native BIP327 MuSig2 signing primitives
     bitcointx.core.script     - Scripts and opcodes
     bitcointx.core.scripteval - Script evaluation/verification
     bitcointx.core.psbt       - BIP174 Partially-signed transactions

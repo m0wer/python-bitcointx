@@ -101,6 +101,7 @@ class Secp256k1_Capabilities:
     has_ecdh: bool
     has_xonly_pubkeys: bool
     has_schnorrsig: bool
+    has_musig: bool
 
 
 @dataclass(frozen=True)
@@ -126,6 +127,126 @@ def _get_schnorrsig_sign_function(lib: ctypes.CDLL) -> Optional[Any]:
     return sign_function
 
 
+_MUSIG_FUNCTION_NAMES = (
+    "secp256k1_musig_pubnonce_parse",
+    "secp256k1_musig_pubnonce_serialize",
+    "secp256k1_musig_aggnonce_parse",
+    "secp256k1_musig_aggnonce_serialize",
+    "secp256k1_musig_partial_sig_parse",
+    "secp256k1_musig_partial_sig_serialize",
+    "secp256k1_musig_pubkey_agg",
+    "secp256k1_musig_pubkey_get",
+    "secp256k1_musig_pubkey_xonly_tweak_add",
+    "secp256k1_musig_nonce_gen",
+    "secp256k1_musig_nonce_agg",
+    "secp256k1_musig_nonce_process",
+    "secp256k1_musig_partial_sign",
+    "secp256k1_musig_partial_sig_verify",
+    "secp256k1_musig_partial_sig_agg",
+)
+
+
+def _add_musig_function_definitions(lib: ctypes.CDLL) -> bool:
+    """Configure the v0.6.0+ MuSig2 ABI only when its full symbol group exists."""
+
+    if not all(getattr(lib, name, None) is not None for name in _MUSIG_FUNCTION_NAMES):
+        return False
+
+    opaque_ptr = ctypes.c_void_p
+    opaque_ptr_array = ctypes.POINTER(opaque_ptr)
+
+    for name in (
+        "secp256k1_musig_pubnonce_parse",
+        "secp256k1_musig_aggnonce_parse",
+        "secp256k1_musig_partial_sig_parse",
+    ):
+        function = getattr(lib, name)
+        function.restype = ctypes.c_int
+        function.argtypes = [opaque_ptr, opaque_ptr, ctypes.c_char_p]
+
+    for name in (
+        "secp256k1_musig_pubnonce_serialize",
+        "secp256k1_musig_aggnonce_serialize",
+        "secp256k1_musig_partial_sig_serialize",
+    ):
+        function = getattr(lib, name)
+        function.restype = ctypes.c_int
+        function.argtypes = [opaque_ptr, ctypes.c_char_p, opaque_ptr]
+
+    lib.secp256k1_musig_pubkey_agg.restype = ctypes.c_int
+    lib.secp256k1_musig_pubkey_agg.argtypes = [
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr_array,
+        ctypes.c_size_t,
+    ]
+    lib.secp256k1_musig_pubkey_get.restype = ctypes.c_int
+    lib.secp256k1_musig_pubkey_get.argtypes = [opaque_ptr, opaque_ptr, opaque_ptr]
+    lib.secp256k1_musig_pubkey_xonly_tweak_add.restype = ctypes.c_int
+    lib.secp256k1_musig_pubkey_xonly_tweak_add.argtypes = [
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+        ctypes.c_char_p,
+    ]
+    lib.secp256k1_musig_nonce_gen.restype = ctypes.c_int
+    lib.secp256k1_musig_nonce_gen.argtypes = [
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+        opaque_ptr,
+        ctypes.c_char_p,
+        opaque_ptr,
+        ctypes.c_char_p,
+    ]
+    lib.secp256k1_musig_nonce_agg.restype = ctypes.c_int
+    lib.secp256k1_musig_nonce_agg.argtypes = [
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr_array,
+        ctypes.c_size_t,
+    ]
+    lib.secp256k1_musig_nonce_process.restype = ctypes.c_int
+    lib.secp256k1_musig_nonce_process.argtypes = [
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+        ctypes.c_char_p,
+        opaque_ptr,
+    ]
+    lib.secp256k1_musig_partial_sign.restype = ctypes.c_int
+    lib.secp256k1_musig_partial_sign.argtypes = [
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+    ]
+    lib.secp256k1_musig_partial_sig_verify.restype = ctypes.c_int
+    lib.secp256k1_musig_partial_sig_verify.argtypes = [
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+        opaque_ptr,
+    ]
+    lib.secp256k1_musig_partial_sig_agg.restype = ctypes.c_int
+    lib.secp256k1_musig_partial_sig_agg.argtypes = [
+        opaque_ptr,
+        ctypes.c_char_p,
+        opaque_ptr,
+        opaque_ptr_array,
+        ctypes.c_size_t,
+    ]
+
+    return True
+
+
 def get_secp256k1() -> Secp256k1:
     """Will create and initialize an instance of Secp256k1 class, and store
     it as attribute of the module this function resides in. If this attribute
@@ -148,6 +269,7 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
     has_ecdh = False
     has_xonly_pubkeys = False
     has_schnorrsig = False
+    has_musig = False
 
     if getattr(lib, 'secp256k1_ecdsa_sign_recoverable', None):
         has_pubkey_recovery = True
@@ -293,13 +415,17 @@ def _add_function_definitions(lib: ctypes.CDLL) -> Secp256k1_Capabilities:
         schnorrsig_sign.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p]
         lib.secp256k1_schnorrsig_sign = schnorrsig_sign  # type: ignore[attr-defined]
 
+    if has_xonly_pubkeys:
+        has_musig = _add_musig_function_definitions(lib)
+
     return Secp256k1_Capabilities(
         has_pubkey_recovery=has_pubkey_recovery,
         has_privkey_negate=has_privkey_negate,
         has_pubkey_negate=has_pubkey_negate,
         has_ecdh=has_ecdh,
         has_xonly_pubkeys=has_xonly_pubkeys,
-        has_schnorrsig=has_schnorrsig)
+        has_schnorrsig=has_schnorrsig,
+        has_musig=has_musig)
 
 
 def secp256k1_create_and_init_context(lib: ctypes.CDLL, flags: int
