@@ -82,8 +82,8 @@ class TestMuSig2(unittest.TestCase):
             CKey(b"\x00" * 31 + b"\x02"),
         ]
         pubkeys = [bytes(key.pub) for key in keys]
-        secnonce_one, pubnonce_one = nonce_gen(pubkeys[0], b"\x11" * 32)
-        secnonce_two, pubnonce_two = nonce_gen(pubkeys[1], b"\x22" * 32)
+        secnonce_one, pubnonce_one = nonce_gen(pubkeys[0])
+        secnonce_two, pubnonce_two = nonce_gen(pubkeys[1])
         message = b"\x33" * 32
         session = get_session(nonce_agg([pubnonce_one, pubnonce_two]), pubkeys, [], message)
         return (
@@ -183,8 +183,8 @@ class TestMuSig2(unittest.TestCase):
         pubkeys = [bytes(key.pub) for key in keys]
         tweak = b"\x00" * 31 + b"\x03"
         direct_ctx = apply_xonly_tweak(key_agg(pubkeys), tweak)
-        secnonce_one, pubnonce_one = nonce_gen(pubkeys[0], b"\x11" * 32)
-        secnonce_two, pubnonce_two = nonce_gen(pubkeys[1], b"\x22" * 32)
+        secnonce_one, pubnonce_one = nonce_gen(pubkeys[0])
+        secnonce_two, pubnonce_two = nonce_gen(pubkeys[1])
         message = b"\x33" * 32
         session = get_session(nonce_agg([pubnonce_one, pubnonce_two]), pubkeys, [tweak], message)
         psig_one = sign_partial(secnonce_one, bytes(keys[0]), session)
@@ -206,8 +206,8 @@ class TestMuSig2(unittest.TestCase):
         pubkeys = [bytes(key.pub) for key in keys]
         tweak = b"\x00" * 32
         direct_ctx = apply_xonly_tweak(key_agg(pubkeys), tweak)
-        secnonce_one, pubnonce_one = nonce_gen(pubkeys[0], b"\x77" * 32)
-        secnonce_two, pubnonce_two = nonce_gen(pubkeys[1], b"\x88" * 32)
+        secnonce_one, pubnonce_one = nonce_gen(pubkeys[0])
+        secnonce_two, pubnonce_two = nonce_gen(pubkeys[1])
         message = b"\x99" * 32
         session = get_session(nonce_agg([pubnonce_one, pubnonce_two]), pubkeys, [tweak], message)
         psig_one = sign_partial(secnonce_one, bytes(keys[0]), session)
@@ -222,8 +222,8 @@ class TestMuSig2(unittest.TestCase):
     def test_duplicate_participants_and_partial_count(self) -> None:
         key = CKey(b"\x00" * 31 + b"\x01")
         pubkey = bytes(key.pub)
-        secnonce_one, pubnonce_one = nonce_gen(pubkey, b"\x44" * 32)
-        secnonce_two, pubnonce_two = nonce_gen(pubkey, b"\x55" * 32)
+        secnonce_one, pubnonce_one = nonce_gen(pubkey)
+        secnonce_two, pubnonce_two = nonce_gen(pubkey)
         message = b"\x66" * 32
         session = get_session(
             nonce_agg([pubnonce_one, pubnonce_two]), [pubkey, pubkey], [], message
