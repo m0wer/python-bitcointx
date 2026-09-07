@@ -286,6 +286,35 @@ class TestMuSig2(unittest.TestCase):
             outcomes = list(executor.map(lambda _: attempt(), range(2)))
         self.assertEqual(sum(outcome is not None for outcome in outcomes), 1)
 
+    def test_secret_nonce_is_wiped_when_signing_allocation_fails(self) -> None:
+        create_buffer = ctypes.create_string_buffer
+        for fail_at in (1, 2, 3):
+            with self.subTest(allocation=fail_at):
+                keys, _, _, session_data, _, _ = self._two_party_session()
+                session, secnonce, _ = session_data
+                nonce_buffer = cast(Any, secnonce)._SecNonce__buffer
+                self.assertTrue(any(nonce_buffer.raw))
+                allocated: list[Any] = []
+
+                def allocate(size: int) -> Any:
+                    if len(allocated) + 1 == fail_at:
+                        raise MemoryError("injected allocation failure")
+                    buffer = create_buffer(size)
+                    # Nonzero contents distinguish cleanup from initial zero allocation.
+                    ctypes.memset(buffer, 0x7F, size)
+                    allocated.append(buffer)
+                    return buffer
+
+                with patch("bitcointx.core.musig.ctypes.create_string_buffer", side_effect=allocate):
+                    with self.assertRaisesRegex(MemoryError, "injected allocation failure"):
+                        sign_partial(secnonce, bytes(keys[0]), session)
+
+                self.assertEqual(nonce_buffer.raw, bytes(ctypes.sizeof(nonce_buffer)))
+                for buffer in allocated:
+                    self.assertEqual(buffer.raw, bytes(ctypes.sizeof(buffer)))
+                with self.assertRaisesRegex(MuSig2Error, "already been consumed"):
+                    sign_partial(secnonce, bytes(keys[0]), session)
+
 
 if __name__ == "__main__":
     unittest.main()
