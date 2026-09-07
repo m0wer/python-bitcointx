@@ -123,6 +123,10 @@ Callers must agree on participant order, derive TapTweak hashes according to
 BIP341, and verify the final signature with `XOnlyPubKey.verify_schnorr`.
 Partial signature aggregation alone does not verify the result. Verify your
 own partial signature before sharing it, as recommended by libsecp256k1.
+`partial_sig_verify` raises `MuSig2Error` for malformed contributions or an
+invalid session argument; well-formed contributions that fail verification
+return `False`. Coordinators should handle this exception separately for each
+peer's contribution.
 
 **Nonce safety:** use `nonce_gen(pubkey)` for fresh operating-system randomness.
 The optional `rand` is secret nonce-generation material, not public auxiliary

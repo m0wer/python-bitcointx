@@ -559,7 +559,13 @@ def sign_partial(secnonce: SecNonce, privkey: bytes, session: Session) -> bytes:
 
 
 def partial_sig_verify(psig: bytes, pubnonce: bytes, pubkey: bytes, session: Session) -> bool:
-    """Verify a participant's 32-byte partial signature for ``session``."""
+    """Verify a participant's 32-byte partial signature for ``session``.
+
+    Malformed contributions or an invalid session argument raise MuSig2Error.
+    Well-formed contributions return False if verification fails or the public
+    key is not a session participant. Coordinators should handle MuSig2Error
+    for each peer's contribution separately.
+    """
 
     secp256k1 = _require_musig()
     if not isinstance(session, Session):
