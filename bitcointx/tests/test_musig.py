@@ -51,6 +51,12 @@ class TestMuSig2Capability(unittest.TestCase):
         partial_library = cast(ctypes.CDLL, SimpleNamespace(**symbols))
         self.assertFalse(_add_musig_function_definitions(partial_library))
 
+    def test_capability_rejects_zkp_musig_abi(self) -> None:
+        symbols = {name: SimpleNamespace() for name in _MUSIG_FUNCTION_NAMES}
+        symbols["secp256k1_musig_nonce_parity"] = SimpleNamespace()
+        zkp_library = cast(ctypes.CDLL, SimpleNamespace(**symbols))
+        self.assertFalse(_add_musig_function_definitions(zkp_library))
+
     def test_missing_capability_fails_clearly(self) -> None:
         unavailable = SimpleNamespace(cap=SimpleNamespace(has_musig=False))
         with patch("bitcointx.core.musig.get_secp256k1", return_value=unavailable):
