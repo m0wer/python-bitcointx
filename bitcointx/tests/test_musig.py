@@ -395,6 +395,18 @@ class TestMuSig2(unittest.TestCase):
         with self.assertRaises(MuSig2Error):
             partial_sig_verify(b"\xff" * 32, pubnonce_one, pubkey, session)
 
+    def test_session_context_binding_is_read_only(self) -> None:
+        keys, pubkeys, message, session_data, pubnonce_one, _ = self._two_party_session()
+        session, secnonce_one, _ = session_data
+        original_ctx = session.ctx
+        tweaked_ctx = apply_xonly_tweak(original_ctx, b"\x00" * 31 + b"\x03")
+        with self.assertRaises(AttributeError):
+            setattr(session, "ctx", tweaked_ctx)
+        self.assertIs(session.ctx, original_ctx)
+
+        psig_one = sign_partial(secnonce_one, bytes(keys[0]), session)
+        self.assertTrue(partial_sig_verify(psig_one, pubnonce_one, pubkeys[0], session))
+
     def test_well_formed_invalid_partial_signature_returns_false(self) -> None:
         _, pubkeys, _, session_data, pubnonce, _ = self._two_party_session()
         session, _, _ = session_data

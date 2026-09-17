@@ -247,12 +247,22 @@ class KeyAggContext:
 class Session:
     """Native MuSig2 signing session bound to its participants and context."""
 
-    __slots__ = ("ctx", "_session", "_participants")
+    __slots__ = ("_ctx", "_session", "_participants")
 
     def __init__(self, ctx: KeyAggContext, session: Any, participants: Tuple[bytes, ...]) -> None:
-        self.ctx = ctx
+        self._ctx = ctx
         self._session = session
         self._participants = participants
+
+    @property
+    def ctx(self) -> KeyAggContext:
+        """The key aggregation context this session was created with.
+
+        libsecp256k1 requires signing and verification to use the same cache
+        that produced the native session, so this binding is read-only.
+        """
+
+        return self._ctx
 
 
 class SecNonce:
