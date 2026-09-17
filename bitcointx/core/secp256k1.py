@@ -152,6 +152,12 @@ def _add_musig_function_definitions(lib: ctypes.CDLL) -> bool:
     if not all(getattr(lib, name, None) is not None for name in _MUSIG_FUNCTION_NAMES):
         return False
 
+    # libsecp256k1-zkp exports the same MuSig2 symbol names, but its
+    # secp256k1_musig_nonce_process has an extra trailing adaptor argument.
+    # Its zkp-only secp256k1_musig_nonce_parity symbol identifies that ABI.
+    if getattr(lib, "secp256k1_musig_nonce_parity", None) is not None:
+        return False
+
     opaque_ptr = ctypes.c_void_p
     opaque_ptr_array = ctypes.POINTER(opaque_ptr)
 

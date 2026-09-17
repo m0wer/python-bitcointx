@@ -72,6 +72,8 @@ library versions or platforms.
 While allowing dynamic linkage with libsecp256k1 adds these complications, it is at the same time allows
 more flexibility for advanced uses. For example, one can use libsecp256k1-zkp instead of libsecp256k1 to
 have access to zero-knowledge-proof related functions, as is done by python-elementstx package.
+MuSig2 is not enabled with libsecp256k1-zkp: its `secp256k1_musig_nonce_process`
+takes an extra adaptor argument, so `has_musig` is `False` for that library.
 
 For best results, use one of the versions listed above, as these are the versions that python-bitcointx automatic tests
 use to build libsecp256k1. Then make sure that this version of the library is loaded by python-bitcointx,
