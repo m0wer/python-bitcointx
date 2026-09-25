@@ -1,5 +1,24 @@
 # python-bitcointx release notes
 
+## v2.2.0
+
+New APIs:
+
+- Add native BIP327 MuSig2 key aggregation, x-only tweaks, nonce generation and
+  aggregation, and partial signing, verification, and aggregation in
+  `bitcointx.core.musig`. This requires libsecp256k1 v0.6.0 or newer built
+  with the `musig` module; other key and signing APIs remain available without
+  it. MuSig2 is unavailable with the incompatible libsecp256k1-zkp ABI.
+- Allow optional private key, message hash, and extra input in MuSig2 nonce
+  generation. A mutable 32-byte randomness seed is wiped after validation,
+  including when native nonce generation fails.
+
+Safety and scope:
+
+- Secret nonces are single-use, including on signing failure. See the README
+  for nonce-handling precautions, supported MuSig2 operations, and limitations;
+  MuSig2 PSBT coordination and Taproot script verification are not provided.
+
 ## v2.1.1
 
 Compatibility fixes:
